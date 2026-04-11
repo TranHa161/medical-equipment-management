@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <link rel="apple-touch-icon" sizes="76x76" th:href="@{/assets/img/logo.png}">
+  <link rel="icon" type="image/png" th:href="@{/assets/img/logo.png}">
+  <title>Đăng nhập - Hệ thống Quản lý Thiết bị Y tế</title>
+  
+  <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Inter:300,400,500,600,700,900" />
+  <link th:href="@{/assets/css/nucleo-icons.css}" rel="stylesheet" />
+  <link th:href="@{/assets/css/nucleo-svg.css}" rel="stylesheet" />
+  <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" />
+  
+  <link id="pagestyle" th:href="@{/assets/css/material-dashboard.css(v='3.2.0')}" rel="stylesheet" />
+</head>
+
+<body class="bg-gray-200">
+  <main class="main-content mt-0">
+    <div class="page-header align-items-start min-vh-100" 
+         style="background-image: url('https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80');">
+      <span class="mask bg-gradient-dark opacity-6"></span>
+      <div class="container my-auto">
+        <div class="row">
+          <div class="col-lg-4 col-md-8 col-12 mx-auto">
+            <div class="card z-index-0 fadeIn3 fadeInBottom shadow-lg">
+              <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                <div class="bg-gradient-info shadow-info border-radius-lg py-3 pe-1 text-center">
+                  <h4 class="text-white font-weight-bolder mt-2 mb-0">HUST MEDICAL</h4>
+                  <p class="text-white text-sm">Cổng thông tin thiết bị y tế</p>
+                </div>
+              </div>
+              <div class="card-body">
+                <form th:action="@{/login}" method="post" role="form" class="text-start">
+                  
+                  <div th:if="${loginError}" class="alert alert-danger text-white text-sm py-2 px-3 border-radius-lg mb-3 d-flex align-items-center">
+                    <i class="material-symbols-rounded text-sm me-2">error</i>
+                    <span th:text="${loginError}">Lỗi hệ thống</span>
+                  </div>
+
+                  <div th:if="${param.error != null and param.error[0] == 'token_invalid'}" 
+                       class="alert alert-warning text-white text-sm py-2 px-3 border-radius-lg mb-3 d-flex align-items-center">
+                    <i class="material-symbols-rounded text-sm me-2">history_toggle_off</i>
+                    <span>Link khôi phục đã hết hạn hoặc không hợp lệ.</span>
+                  </div>
+
+                  <div th:if="${param.resetSuccess}" class="alert alert-success text-white text-sm py-2 px-3 border-radius-lg mb-3 d-flex align-items-center">
+                    <i class="material-symbols-rounded text-sm me-2">check_circle</i>
+                    <span>Mật khẩu đã được cập nhật thành công!</span>
+                  </div>
+
+                  <div th:if="${param.logout}" class="alert alert-info text-white text-sm py-2 px-3 border-radius-lg mb-3 d-flex align-items-center">
+                    <i class="material-symbols-rounded text-sm me-2">info</i>
+                    <span>Bạn đã đăng xuất khỏi hệ thống.</span>
+                  </div>
+
+                  <div class="input-group input-group-static my-3">
+                    <label class="text-info font-weight-bold text-xs">TÊN ĐĂNG NHẬP</label>
+                    <input type="text" name="username" class="form-control" placeholder="Nhập username nhân sự..." required>
+                  </div>
+
+                  <div class="input-group input-group-static mb-3">
+                    <label class="text-info font-weight-bold text-xs">MẬT KHẨU</label>
+                    <input type="password" name="password" class="form-control" placeholder="••••••••" required>
+                  </div>
+                  
+                  <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div class="form-check form-switch d-flex align-items-center mb-0">
+                      <input class="form-check-input" type="checkbox" id="rememberMe" name="remember-me">
+                      <label class="form-check-label mb-0 ms-2 text-xs" for="rememberMe">Ghi nhớ</label>
+                    </div>
+                    <a href="javascript:;" class="text-info text-gradient font-weight-bold text-xs" onclick="showForgotModal()">Quên mật khẩu?</a>
+                  </div>
+                  
+                  <div class="text-center">
+                    <button type="submit" class="btn bg-gradient-info w-100 my-4 mb-2">ĐĂNG NHẬP HỆ THỐNG</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script th:src="@{/assets/js/core/popper.min.js}"></script>
+  <script th:src="@{/assets/js/core/bootstrap.min.js}"></script>
+  <script th:src="@{/assets/js/plugins/perfect-scrollbar.min.js}"></script>
+  <script th:src="@{/assets/js/material-dashboard.min.js(v='3.2.0')}"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script>
+  function showForgotModal() {
+      Swal.fire({
+          title: 'Khôi phục mật khẩu',
+          text: 'Vui lòng nhập Tên đăng nhập (Username) của bạn:',
+          input: 'text',
+          inputPlaceholder: 'Ví dụ: tran_tech01',
+          showCancelButton: true,
+          confirmButtonText: 'Gửi yêu cầu',
+          cancelButtonText: 'Hủy',
+          confirmButtonColor: '#11cdef',
+          showLoaderOnConfirm: true,
+          preConfirm: (username) => {
+              return fetch(`/forgot-password?username=${username}`, { method: 'POST' })
+                  .then(response => {
+                      if (!response.ok) return response.text().then(text => { throw new Error(text) });
+                      return response.text();
+                  })
+                  .catch(error => { Swal.showValidationMessage(`Lỗi: ${error.message}`); });
+          },
+          allowOutsideClick: () => !Swal.isLoading()
+      }).then((result) => {
+          if (result.isConfirmed) {
+              Swal.fire('Đã gửi!', 'Link khôi phục đã được gửi vào Email đăng ký của bạn.', 'success');
+          }
+      });
+  }
+  </script>
+  </body>
+</html>

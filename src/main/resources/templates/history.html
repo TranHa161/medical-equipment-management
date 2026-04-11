@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <link rel="apple-touch-icon" sizes="76x76" th:href="@{/assets/img/logo.png}">
+  <link rel="icon" type="image/png" th:href="@{/assets/img/logo.png}">
+  <title>Lịch sử bảo trì - HUST MEDICAL</title>
+  
+  <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Inter:300,400,500,600,700,900" />
+  <link th:href="@{/assets/css/nucleo-icons.css}" rel="stylesheet" />
+  <link th:href="@{/assets/css/nucleo-svg.css}" rel="stylesheet" />
+  <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" />
+  <link id="pagestyle" th:href="@{/assets/css/material-dashboard.css(v='3.2.0')}" rel="stylesheet" />
+</head>
+
+<body class="g-sidenav-show bg-gray-100">
+  <aside th:replace="~{fragments/sidebar :: sidebar('history')}"></aside>
+  
+  <main class="main-content position-relative max-height-vh-100 h-100 border-radius-lg">
+      <nav class="navbar navbar-main navbar-expand-lg px-0 mx-3 shadow-none border-radius-xl" id="navbarBlur" data-scroll="true">
+        <div class="container-fluid py-1 px-3">
+          <nav aria-label="breadcrumb">
+            <ol class="breadcrumb bg-transparent mb-0 pb-0 pt-1 px-0 me-sm-6 me-5">
+              <li class="breadcrumb-item text-sm"><a class="opacity-5 text-dark" href="javascript:;">Dữ liệu</a></li>
+              <li class="breadcrumb-item text-sm text-dark active" aria-current="page">Lịch sử bảo trì</li>
+            </ol>
+            <h6 class="font-weight-bolder mb-0">Lịch sử sửa chữa & Bảo trì</h6>
+          </nav>
+        </div>
+      </nav>
+
+      <div class="container-fluid py-4">
+        <div class="row">
+          <div class="col-12">
+            <div class="card my-4">
+              <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                <div class="bg-gradient-info shadow-dark border-radius-lg pt-4 pb-3">
+                  <h6 class="text-white text-capitalize ps-3 mb-0">Nhật ký hoạt động thiết bị</h6>
+                </div>
+              </div>
+              
+              <div class="card-body px-0 pb-2">
+                <div class="table-responsive p-0">
+                  <table class="table align-items-center mb-0">
+					<thead>
+					  <tr>
+					    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Thiết bị / Serial</th>
+					    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Người thực hiện</th>
+					    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Thời gian</th>
+					    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Kết quả xử lý</th>
+					    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Chi phí (VND)</th>
+					  </tr>
+					  <tr class="bg-gray-100">
+					    <form th:action="@{/history}" method="get" id="filterForm">
+					      <td class="px-2 py-1">
+					        <input type="text" name="keyword" th:value="${keyword}" 
+					               class="form-control form-control-sm border border-radius-sm bg-white px-2 text-xxs" 
+					               placeholder="Tên máy / Serial...">
+					      </td>
+					      <td class="px-2 py-1">
+					        <input type="text" name="techName" th:value="${techName}" 
+					               class="form-control form-control-sm border border-radius-sm bg-white px-2 text-xxs" 
+					               placeholder="Kỹ thuật viên...">
+					      </td>
+						  <td class="px-2 py-1">
+						      <div class="d-flex align-items-center justify-content-center" style="gap: 8px;">
+						          <input type="date" name="startDate" th:value="${startDate}" 
+						                 class="form-control form-control-sm border border-radius-sm bg-white px-2 text-xxs" 
+						                 style="max-width: 140px; height: 32px;">
+						          
+						          <span class="text-secondary font-weight-bold" style="font-size: 12px;">~</span>
+						          
+						          <input type="date" name="endDate" th:value="${endDate}" 
+						                 class="form-control form-control-sm border border-radius-sm bg-white px-2 text-xxs" 
+						                 style="max-width: 140px; height: 32px;">
+						      </div>
+						  </td>
+					      <td class="px-2 py-1 text-center">
+					          <span class="text-xxxs text-secondary opacity-5"></span>
+					      </td>
+					      <td class="px-2 py-1 text-center">
+					          <div class="d-flex align-items-center justify-content-center">
+					              <button type="submit" class="btn btn-link p-0 m-0 me-2" title="Lọc dữ liệu">
+					                  <i class="material-symbols-rounded text-sm text-info">filter_alt</i>
+					              </button>
+					              <a th:href="@{/history}" title="Xóa bộ lọc">
+					                  <i class="material-symbols-rounded text-sm text-danger">restart_alt</i>
+					              </a>
+					          </div>
+					      </td>
+					    </form>
+					  </tr>
+					</thead>
+                    <tbody>
+                      <tr th:if="${#lists.isEmpty(historyList)}">
+                        <td colspan="5" class="text-center py-4">
+                          <p class="text-sm font-weight-bold mb-0">Chưa có bản ghi nào.</p>
+                        </td>
+                      </tr>
+                      <tr th:each="h : ${historyList}">
+                        <td>
+                          <div class="d-flex px-2 py-1">
+                            <div class="d-flex flex-column justify-content-center">
+                              <h6 class="mb-0 text-sm" th:text="${h.deviceName}">Tên máy</h6>
+                              <p class="text-xs text-secondary mb-0" th:text="${h.deviceSerial}">Serial</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td>
+                          <div class="d-flex align-items-center">
+                            <span class="text-xs font-weight-bold" th:text="${h.technicianName}">Admin/Tech Name</span>
+                          </div>
+                        </td>
+                        <td class="align-middle text-center">
+                          <span class="text-secondary text-xs font-weight-bold" 
+                                th:text="${#temporals.format(h.maintenanceDate, 'dd/MM/yyyy HH:mm')}">11/01/2026</span>
+                        </td>
+                        <td>
+                          <p class="text-xs font-weight-bold mb-0 text-wrap" style="max-width: 250px;" th:text="${h.result}">Mô tả kết quả</p>
+                        </td>
+                        <td class="align-middle text-center">
+                          <span class="text-dark text-xs font-weight-bolder" 
+                                th:text="${#numbers.formatDecimal(h.cost, 0, 'COMMA', 0, 'POINT')} + ' đ'">0 đ</span>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+    
+    <script th:src="@{/assets/js/core/popper.min.js}"></script>
+    <script th:src="@{/assets/js/core/bootstrap.min.js}"></script>
+    <script th:src="@{/assets/js/plugins/perfect-scrollbar.min.js}"></script>
+    <script th:src="@{/assets/js/material-dashboard.min.js(v='3.2.0')}"></script>
+  </body>
+  </html>

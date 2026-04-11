@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <link rel="apple-touch-icon" sizes="76x76" th:href="@{/assets/img/logo.png}">
+  <link rel="icon" type="image/png" th:href="@{/assets/img/logo.png}">
+  <title>Phiếu báo hỏng - HUST MEDICAL</title>
+  
+  <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Inter:300,400,500,600,700,900" />
+  <link th:href="@{/assets/css/nucleo-icons.css}" rel="stylesheet" />
+  <link th:href="@{/assets/css/nucleo-svg.css}" rel="stylesheet" />
+  <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" />
+  <link id="pagestyle" th:href="@{/assets/css/material-dashboard.css(v='3.2.0')}" rel="stylesheet" />
+</head>
+
+<body class="g-sidenav-show bg-gray-100">
+  <aside th:replace="~{fragments/sidebar :: sidebar('requests')}"></aside>
+	
+  <main class="main-content position-relative max-height-vh-100 h-100 border-radius-lg">
+    <div class="container-fluid py-4">
+      <div class="row">
+        <div class="col-lg-8 col-md-10 mx-auto">
+          <div class="card mt-4">
+            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+              <div class="bg-gradient-info shadow-info border-radius-lg pt-4 pb-3">
+                <h6 class="text-white text-capitalize ps-3" 
+                    th:text="${requestDTO?.id != null} ? 'Chỉnh sửa phiếu báo hỏng' : 'Gửi yêu cầu báo hỏng mới'">Form báo hỏng</h6>
+              </div>
+            </div>
+            
+            <div class="card-body p-4">
+              <form id="requestForm" th:data-id="${requestDTO?.id}">
+                <input type="hidden" id="requesterId" th:value="${requestDTO?.requesterId}">
+
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="input-group input-group-static mb-4">
+                      <label for="deviceId" class="ms-0">Thiết bị báo hỏng</label>
+                      <select class="form-control" id="deviceId" th:disabled="${requestDTO?.id != null}">
+                        <option th:each="dev : ${devices}" 
+                                th:value="${dev.id}" 
+                                th:text="${dev.name + ' (' + dev.serialNumber + ')'}"
+                                th:selected="${dev.id == requestDTO.deviceId}">
+                        </option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="col-md-6">
+                    <div class="input-group input-group-static mb-4">
+                      <label for="severity" class="ms-0">Mức độ nghiêm trọng</label>
+                      <select class="form-control" id="severity">
+                        <option th:each="sev : ${T(com.example.demo.enums.SeverityLevel).values()}" 
+                                th:value="${sev}" 
+                                th:text="${sev}"
+                                th:selected="${sev == requestDTO?.severity}">
+                        </option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="row">
+                  <div class="col-12">
+                    <div class="input-group input-group-static mb-4">
+                      <label>Mô tả chi tiết lỗi / sự cố thiết bị</label>
+                      <textarea id="description" class="form-control" rows="4" 
+                                th:text="${requestDTO?.description}"
+                                placeholder="Vui lòng mô tả cụ thể tình trạng máy..."></textarea>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="d-flex justify-content-end mt-4">
+                  <a th:href="@{/requests}" class="btn btn-light m-0">Quay lại</a>
+                  <button type="button" onclick="submitRequestForm()" class="btn bg-gradient-info m-0 ms-2">
+                      <i class="material-symbols-rounded text-sm me-1">send</i> Gửi yêu cầu
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+  
+  <script th:src="@{/assets/js/core/popper.min.js}"></script>
+  <script th:src="@{/assets/js/core/bootstrap.min.js}"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script th:src="@{/assets/js/material-dashboard.min.js(v='3.2.0')}"></script>
+
+  <script>
+    function submitRequestForm() {
+        const form = document.getElementById('requestForm');
+        const id = form.getAttribute('data-id');
+        
+		// Kiểm tra kỹ: Nếu ID không có giá trị, hoặc là "null", hoặc là "0" thì coi như THÊM MỚI
+	    const isEdit = (id && id !== "null" && id !== "" && id !== "0");
+	    
+	    // Chọn đúng "cửa" để gửi dữ liệu
+	    const url = isEdit ? `/requests/update/${id}` : `/requests/save`;
+		
+		console.log(">>> ID nhận được:", id);
+	    console.log(">>> Chế độ:", isEdit ? "CẬP NHẬT" : "THÊM MỚI");
+	    console.log(">>> Gửi tới URL:", url);
+
+        const data = {
+            deviceId: parseInt(document.getElementById('deviceId').value),
+            requesterId: parseInt(document.getElementById('requesterId').value),
+            severity: document.getElementById('severity').value,
+            description: document.getElementById('description').value
+        };
+
+        Swal.fire({
+            title: 'Đang gửi yêu cầu...',
+            didOpen: () => { Swal.showLoading(); }
+        });
+
+        fetch(url, {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        })
+        .then(async response => {
+            if (response.ok) {
+                Swal.fire({
+                    title: 'Thành công!',
+                    text: id ? 'Cập nhật phiếu thành công.' : 'Yêu cầu báo hỏng đã được gửi tới Quản trị viên.',
+                    icon: 'success'
+                }).then(() => { window.location.href = '/requests'; });
+            } else {
+                const errorMsg = await response.text();
+                Swal.fire('Lỗi!', errorMsg, 'warning');
+            }
+        })
+        .catch(error => {
+            Swal.fire('Lỗi!', 'Không thể kết nối máy chủ.', 'error');
+        });
+    }
+  </script>
+</body>
+</html>

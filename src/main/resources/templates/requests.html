@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="apple-touch-icon" sizes="76x76" th:href="@{/assets/img/logo.png}">
+    <link rel="icon" type="image/png" th:href="@{/assets/img/logo.png}">
+    <title>Phiếu báo hỏng - HUST MEDICAL</title>
+    
+    <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Inter:300,400,500,600,700,900" />
+    <link th:href="@{/assets/css/nucleo-icons.css}" rel="stylesheet" />
+    <link th:href="@{/assets/css/nucleo-svg.css}" rel="stylesheet" />
+    <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" />
+    <link id="pagestyle" th:href="@{/assets/css/material-dashboard.css(v='3.2.0')}" rel="stylesheet" />
+	<style>
+	  .cursor-pointer {
+	    cursor: pointer !important;
+	  }
+	  .hover-info:hover h6 {
+	    color: #11cdef !important;
+	    text-decoration: underline;
+	  }
+	  /* Giúp bảng không bị nhảy khi hover tooltip */
+	  .text-truncate {
+	    display: inline-block;
+	  }
+	</style>
+</head>
+
+<body class="g-sidenav-show bg-gray-100">
+<aside th:replace="~{fragments/sidebar :: sidebar('requests')}"></aside>
+
+<main class="main-content position-relative max-height-vh-100 h-100 border-radius-lg">
+    <nav class="navbar navbar-main navbar-expand-lg px-0 mx-3 shadow-none border-radius-xl" id="navbarBlur" data-scroll="true">
+        <div class="container-fluid py-1 px-3">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb bg-transparent mb-0 pb-0 pt-1 px-0 me-sm-6 me-5">
+                    <li class="breadcrumb-item text-sm"><a class="opacity-5 text-dark" href="javascript:;">Vận hành</a></li>
+                    <li class="breadcrumb-item text-sm text-dark active" aria-current="page">Phiếu báo hỏng</li>
+                </ol>
+                <h6 class="font-weight-bolder mb-0">Quản lý phiếu báo hỏng</h6>
+            </nav>
+            <div class="collapse navbar-collapse mt-sm-0 mt-2 me-md-0 me-sm-4" id="navbar">
+                <ul class="navbar-nav d-flex align-items-center justify-content-end ms-md-auto">
+                    <li class="nav-item d-flex align-items-center" sec:authorize="hasAnyRole('ENDUSER')">
+                        <a th:href="@{/requests/add}" class="btn btn-sm mb-0 me-3 bg-gradient-info">
+                            <i class="material-symbols-rounded text-sm">add_circle</i> Thêm yêu cầu báo hỏng
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid py-4">
+        <div class="row">
+            <div class="col-12">
+                <div class="card my-4">
+                    <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                        <div class="bg-gradient-info shadow-info border-radius-lg pt-4 pb-3">
+                            <h6 class="text-white text-capitalize ps-3 mb-0">
+                                <span th:text="${#authorization.expression('hasRole(''ADMIN'')')} ? 'Tất cả phiếu báo hỏng' : 'Phiếu báo hỏng của tôi'">Danh sách</span>
+                            </h6>
+                        </div>
+                    </div>
+                    
+                    <div class="card-body px-0 pb-2">
+                        <div class="table-responsive p-0">
+                            <table class="table align-items-center justify-content-center mb-0">
+								<thead>
+								  <tr>
+								    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Thiết bị / Serial</th>
+								    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Mô tả lỗi</th>
+								    <th sec:authorize="hasRole('ADMIN')" class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Người báo</th>
+								    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Thời gian gửi</th>
+								    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Mức độ ưu tiên</th>
+								    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Trạng thái phiếu</th>
+								    <th></th> </tr>
+								  
+								  <tr class="bg-gray-100">
+								    <form th:action="@{/requests}" method="get" id="filterForm">
+								      <td class="px-2 py-1 align-middle">
+								        <input type="text" name="keyword" th:value="${keyword}" 
+								               class="form-control form-control-sm border border-radius-sm bg-white px-2 text-xxs" 
+								               style="height: 32px;" placeholder="Tên máy / Serial...">
+								      </td>
+								      
+								      <td class="px-2 py-1 align-middle text-center">
+								        <span class="text-xxs text-secondary opacity-5">--</span>
+								      </td>
+
+								      <td sec:authorize="hasRole('ADMIN')" class="px-2 py-1 align-middle">
+								        <input type="text" name="requester" th:value="${requester}" 
+								               class="form-control form-control-sm border border-radius-sm bg-white px-2 text-xxs" 
+								               style="height: 32px;" placeholder="Tên người báo...">
+								      </td>
+
+									  <td class="px-2 py-1 align-middle text-center">
+									      <input type="date" name="date" th:value="${date}" 
+									             class="form-control form-control-sm border border-radius-sm bg-white px-2 text-xxs" 
+									             style="height: 32px;">
+									  </td>
+
+									  <td class="px-2 py-1 align-middle">
+									      <select name="severity" class="form-select form-select-sm border border-radius-sm bg-white text-xxs px-2" style="height: 32px;">
+									          <option value="">Tất cả</option>
+									          <option th:each="s : ${T(com.example.demo.enums.SeverityLevel).values()}" 
+									                  th:value="${s}" 
+									                  th:selected="${s.name() == severity}"
+									                  th:text="${s.name() == 'URGENT' ? 'KHẨN CẤP' : 
+									                           (s.name() == 'HIGH'   ? 'CAO' : 
+									                           (s.name() == 'MEDIUM' ? 'TRUNG BÌNH' : 
+									                           (s.name() == 'LOW'    ? 'THẤP' : 'BÌNH THƯỜNG')))}"> </option>
+									      </select>
+									  </td>
+
+									  <td class="px-2 py-1 align-middle">
+									      <select name="status" class="form-select form-select-sm border border-radius-sm bg-white text-xxs px-2" style="height: 32px;">
+									          <option value="">Tất cả</option>
+									          <option th:each="st : ${T(com.example.demo.enums.RequestStatus).values()}" 
+									                  th:value="${st}" 
+									                  th:selected="${st.name() == status}"
+									                  th:text="${st.name() == 'NEW' ? 'MỚI' : 
+									                           (st.name() == 'PROGRESSING' ? 'ĐANG XỬ LÝ' : 
+									                           (st.name() == 'REJECTED' ? 'TỪ CHỐI' : 
+									                           (st.name() == 'CANCELLED' ? 'HỦY' : 'HOÀN THÀNH')))}"> </option>
+									      </select>
+									  </td>
+
+								      <td class="px-2 py-1 align-middle text-center">
+								          <div class="d-flex align-items-center justify-content-center">
+								              <button type="submit" class="btn btn-link p-0 m-0 me-2" title="Lọc dữ liệu">
+								                  <i class="material-symbols-rounded text-sm text-info">filter_alt</i>
+								              </button>
+								              <a th:href="@{/requests}" title="Xóa bộ lọc">
+								                  <i class="material-symbols-rounded text-sm text-danger">restart_alt</i>
+								              </a>
+								          </div>
+								      </td>
+								    </form>
+								  </tr>
+								</thead>
+                                <tbody>
+                                <tr th:if="${#lists.isEmpty(requestList)}">
+                                    <td colspan="6" class="text-center py-4">
+                                        <p class="text-sm font-weight-bold mb-0">Không có phiếu báo hỏng nào.</p>
+                                    </td>
+                                </tr>
+                                <tr th:each="req : ${requestList}">
+									<td>
+									    <div class="d-flex px-2 py-1">
+									        <i class="material-symbols-rounded me-3">report_problem</i>
+									        <div>
+									            <a th:href="@{/devices/detail/{id}(id=${req.deviceId})}" class="text-dark hover-info">
+									                <h6 class="mb-0 text-sm font-weight-bold" th:text="${req.deviceName}">Máy MRI</h6>
+									                <p class="text-xs text-secondary mb-0" th:text="${req.serialNumber}">SN-12345</p>
+									            </a>
+									        </div>
+									    </div>
+									</td>
+
+									<td class="cursor-pointer" 
+									    th:data-description="${req.description}" 
+									    onclick="showFullDescription(this)">
+									    <p class="text-sm font-weight-bold mb-0 text-truncate" 
+									       style="max-width: 200px;" 
+									       th:text="${req.description}">
+									       Mô tả lỗi
+									    </p>
+									</td>
+                                    <td sec:authorize="hasRole('ADMIN')">
+                                        <span class="text-xs font-weight-bold" th:text="${req.requesterFullName}">Nguyễn Văn A</span>
+                                    </td>
+									<td class="align-middle text-center">
+									      <span class="text-secondary text-xs font-weight-bold" 
+									            th:text="${req.createdAt != null ? #temporals.format(req.createdAt, 'HH:mm - dd/MM/yyyy') : 'N/A'}">
+									          10:30 - 12/01/2026
+									      </span>
+									  </td>
+									  <td class="align-middle text-center text-sm">
+									      <span class="badge badge-sm" 
+									            th:classappend="${req.severity == T(com.example.demo.enums.SeverityLevel).URGENT ? 'bg-gradient-danger' : 
+									                             (req.severity == T(com.example.demo.enums.SeverityLevel).HIGH ? 'bg-gradient-warning' : 
+									                             (req.severity == T(com.example.demo.enums.SeverityLevel).MEDIUM ? 'bg-gradient-info' : 
+									                             (req.severity == T(com.example.demo.enums.SeverityLevel).LOW ? 'bg-gradient-secondary' : 'bg-gradient-success')))}"
+									            th:text="${req.severity == T(com.example.demo.enums.SeverityLevel).URGENT ? 'KHẨN CẤP' : 
+									                     (req.severity == T(com.example.demo.enums.SeverityLevel).HIGH ? 'CAO' : 
+									                     (req.severity == T(com.example.demo.enums.SeverityLevel).MEDIUM ? 'TRUNG BÌNH' : 
+									                     (req.severity == T(com.example.demo.enums.SeverityLevel).LOW ? 'THẤP' : 'BÌNH THƯỜNG')))}">
+									          Status
+									      </span>
+									  </td>
+
+                                    <td class="align-middle text-center text-sm">
+                                        <span th:remove="tag" th:switch="${req.status}">
+                                            <span th:case="${T(com.example.demo.enums.RequestStatus).NEW}" class="badge badge-sm bg-gradient-primary">MỚI</span>
+                                            <span th:case="${T(com.example.demo.enums.RequestStatus).PROGRESSING}" class="badge badge-sm bg-gradient-info">ĐANG XỬ LÝ</span>
+                                            <span th:case="${T(com.example.demo.enums.RequestStatus).REJECTED}" class="badge badge-sm bg-gradient-danger">TỪ CHỐI</span>
+                                            <span th:case="${T(com.example.demo.enums.RequestStatus).CANCELLED}" class="badge badge-sm bg-gradient-warning">HỦY</span>
+                                            <span th:case="*" class="badge badge-sm bg-gradient-success">HOÀN THÀNH</span>
+                                        </span>
+                                    </td>
+                                    <td class="align-middle">
+                                        <div sec:authorize="hasRole('ADMIN')" 
+                                             th:if="${req?.status == T(com.example.demo.enums.RequestStatus).NEW}" 
+                                             class="d-inline-flex">
+                                            <a th:href="@{/work-orders/from-request/{id}(id=${req.id})}" 
+                                               class="btn btn-link text-success text-gradient px-3 mb-0">
+                                                <i class="material-symbols-rounded text-sm me-2">check_circle</i>Duyệt
+                                            </a>
+                                            <button type="button" 
+                                                    th:onclick="'rejectRequest(' + ${req.id} + ')'"
+                                                    class="btn btn-link text-danger text-gradient px-3 mb-0">
+                                                <i class="material-symbols-rounded text-sm me-2">cancel</i>Từ chối
+                                            </button>
+                                        </div>
+
+                                        <a sec:authorize="hasRole('ENDUSER')" 
+                                           th:if="${req?.status == T(com.example.demo.enums.RequestStatus).NEW}"
+                                           th:href="@{/requests/edit/{id}(id=${req.id})}" 
+                                           class="btn btn-link text-info text-gradient px-3 mb-0">
+                                            <i class="material-symbols-rounded text-sm me-2">edit</i>Sửa
+                                        </a>
+                                        
+                                        <p th:if="${req?.status == T(com.example.demo.enums.RequestStatus).REJECTED}" 
+                                           class="text-xs text-danger mb-0 mt-2 ps-3" 
+                                           th:text="'Lý do: ' + ${req?.rejectionReason}"></p>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script th:src="@{/assets/js/core/popper.min.js}"></script>
+<script th:src="@{/assets/js/core/bootstrap.min.js}"></script>
+<script th:src="@{/assets/js/plugins/perfect-scrollbar.min.js}"></script>
+<script th:src="@{/assets/js/material-dashboard.min.js(v='3.2.0')}"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    })
+    
+    function rejectRequest(requestId) {
+        Swal.fire({
+            title: 'Từ chối báo hỏng?',
+            text: "Bạn cần nhập lý do để người báo hỏng được biết.",
+            input: 'textarea',
+            inputPlaceholder: 'Ví dụ: Thông tin báo hỏng không chính xác...',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#e91e63', 
+            confirmButtonText: 'Xác nhận từ chối',
+            cancelButtonText: 'Hủy'
+        }).then((result) => {
+            if (result.isConfirmed && result.value) {
+                fetch(`/requests/reject/${requestId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ reason: result.value })
+                })
+                .then(response => {
+                    if (response.ok) {
+                        Swal.fire('Thành công!', 'Đã từ chối yêu cầu.', 'success').then(() => location.reload());
+                    } else {
+                        Swal.fire('Lỗi!', 'Không thể thực hiện.', 'error');
+                    }
+                });
+            }
+        });
+    }
+	// Thêm hàm này vào đoạn <script> cuối file của bạn
+		function showFullDescription(element) {
+		    // Lấy nội dung từ thuộc tính data-description
+		    const text = element.getAttribute('data-description');
+		    
+		    Swal.fire({
+		        title: '<h5 class="font-weight-bolder">Chi tiết mô tả lỗi</h5>',
+		        text: text,
+		        icon: 'info',
+		        confirmButtonText: 'Đóng',
+		        confirmButtonColor: '#11cdef',
+		        customClass: {
+		            confirmButton: 'btn bg-gradient-info',
+		        },
+		        buttonsStyling: false
+		    });
+		}
+</script>
+</body>
+</html>

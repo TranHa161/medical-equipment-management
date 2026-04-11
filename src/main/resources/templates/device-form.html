@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <link rel="apple-touch-icon" sizes="76x76" th:href="@{/assets/img/logo.png}">
+  <link rel="icon" type="image/png" th:href="@{/assets/img/logo.png}">
+  <title>Quản lý thiết bị - HUST MEDICAL</title>
+  
+  <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Inter:300,400,500,600,700,900" />
+  <link th:href="@{/assets/css/nucleo-icons.css}" rel="stylesheet" />
+  <link th:href="@{/assets/css/nucleo-svg.css}" rel="stylesheet" />
+  <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" />
+  <link id="pagestyle" th:href="@{/assets/css/material-dashboard.css(v='3.2.0')}" rel="stylesheet" />
+  <style>
+    /* Chỉ áp dụng cho các ô input, select hoặc textarea có thuộc tính readonly */
+    input[readonly], 
+    input:disabled,
+    select:disabled,
+    textarea[readonly] {
+      cursor: not-allowed !important;
+      background-color: #f0f2f5 !important; /* Đổi màu nền nhẹ để trông "bị khóa" hơn */
+      opacity: 0.8;
+    }
+
+    /* Riêng với Material Dashboard, ta cần xử lý cả phần bao quanh nếu cần */
+    .input-group.input-group-static input[readonly] {
+      border-bottom: 1px dashed #d2d6da; /* Tạo hiệu ứng đường kẻ đứt cho ô không sửa được */
+    }
+  </style>
+</head>
+
+<body class="g-sidenav-show bg-gray-100">
+  <aside th:replace="~{fragments/sidebar :: sidebar('devices')}"></aside>
+	
+  <main class="main-content position-relative max-height-vh-100 h-100 border-radius-lg">
+      <div class="container-fluid py-4">
+          <div class="row">
+              <div class="col-lg-11 col-md-12 mx-auto">
+                  <div class="card mt-4 shadow-lg border-radius-xl">
+                      <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                          <div class="bg-gradient-info shadow-info border-radius-lg pt-4 pb-3">
+                              <h6 class="text-white text-capitalize ps-3 mb-0">
+                                  <i class="material-symbols-rounded me-2">medical_services</i>
+                                  <span th:text="${device.id != null} ? 'Cập nhật hồ sơ thiết bị' : 'Thêm thiết bị mới vào hệ thống'">Form</span>
+                              </h6>
+                          </div>
+                      </div>
+                      
+                      <div class="card-body p-4">
+                          <form id="deviceForm" th:data-id="${device.id}">
+                              <div class="row">
+                                  <div class="col-lg-4 border-end border-gray-200">
+                                      <div class="text-center px-2">
+                                          <p class="text-sm font-weight-bold mb-3 text-info text-uppercase">Hình ảnh thiết bị</p>
+                                          <div class="position-relative d-inline-block shadow-sm border-radius-lg overflow-hidden border">
+                                              <img id="previewImg" 
+                                                   th:src="${device.imageUrl != null ? device.imageUrl : '/assets/img/logo.png'}" 
+                                                   class="img-fluid" 
+                                                   style="height: 280px; width: 300px; object-fit: contain;" alt="Preview">
+                                          </div>
+                                          <div class="mt-4" sec:authorize="hasRole('ADMIN')">
+                                              <label for="imageFile" class="btn btn-sm btn-outline-info mb-0">
+                                                  <i class="material-symbols-rounded text-sm me-2">photo_camera</i> Chọn ảnh
+                                              </label>
+                                              <input type="file" id="imageFile" class="d-none" accept="image/*" onchange="previewFile()">
+                                          </div>
+                                      </div>
+                                  </div>
+
+                                  <div class="col-lg-8 ps-lg-4 mt-4 mt-lg-0">
+                                      <div class="row">
+                                          <div class="col-md-6">
+                                              <div class="input-group input-group-static mb-4">
+                                                  <label class="text-info font-weight-bold text-xs text-uppercase">Số Serial (Định danh)</label>
+                                                  <input type="text" id="serialNumber" th:value="${device.serialNumber}" class="form-control" 
+                                                         placeholder="Nhập mã định danh..."
+                                                         th:readonly="${!#authorization.expression('hasRole(''ADMIN'')')}">
+                                              </div>
+                                          </div>
+                                          <div class="col-md-6">
+                                              <div class="input-group input-group-static mb-4">
+                                                  <label class="text-info font-weight-bold text-xs text-uppercase">Vị trí lắp đặt</label>
+                                                  <input type="text" id="location" th:value="${device.location}" class="form-control"
+                                                         placeholder="Ví dụ: Phòng MRI - Tầng 1"
+                                                         th:readonly="${!#authorization.expression('hasRole(''ADMIN'')')}">
+                                              </div>
+                                          </div>
+                                      </div>
+
+                                      <div class="row">
+                                          <div class="col-md-6">
+                                              <div class="input-group input-group-static mb-4">
+                                                  <label for="status" class="text-info font-weight-bold text-xs text-uppercase">Trạng thái vận hành</label>
+                                                  <select class="form-control" id="status">
+                                                      <option value="ACTIVE" th:selected="${device.status == 'ACTIVE'}">Sẵn sàng sử dụng</option>
+                                                      <option value="MAINTENANCE" th:selected="${device.status == 'MAINTENANCE'}">Đang bảo trì</option>
+                                                      <option value="BROKEN" th:selected="${device.status == 'BROKEN'}">Đang gặp sự cố</option>
+                                                      <option value="UNAVAILABLE" th:selected="${device.status == 'UNAVAILABLE'}">Ngừng hoạt động</option>
+                                                  </select>
+                                              </div>
+                                          </div>
+                                          <div class="col-md-6" sec:authorize="hasRole('ADMIN')">
+                                              <div class="input-group input-group-static mb-4">
+                                                  <label for="typeId" class="text-info font-weight-bold text-xs text-uppercase">Loại thiết bị y tế</label>
+												  <select class="form-control" id="typeId" onchange="handleTypeChange()">
+												      <option value="" data-manufacturer="" data-model="" data-cycle="" data-description="" data-manual-url="">Loại thiết bị</option>
+												      <option th:each="type : ${deviceTypes}" 
+												              th:value="${type.id}" 
+												              th:text="${type.typeName}"
+												              th:data-manufacturer="${type.manufacturer}"
+												              th:data-model="${type.model}"
+												              th:data-cycle="${type.defaultMaintenanceCycle}"
+												              th:data-description="${type.typeDescription}"
+												              th:data-manual-url="${type.manualUrl}" 
+												              th:selected="${device.typeId != null && type.id == device.typeId}">
+												      </option>
+												      <option value="NEW" class="text-info font-weight-bold">+ Thêm loại thiết bị mới...</option>
+												  </select>
+                                              </div>
+                                          </div>
+                                      </div>
+
+                                      <div id="typeDetailSection" style="display: none;" class="bg-gray-100 p-4 border-radius-lg mb-4 shadow-inner">
+                                          <h6 class="text-xs font-weight-bolder mb-3 text-dark text-uppercase">
+                                              <i class="material-symbols-rounded text-sm me-1">settings</i> Thông số kỹ thuật loại máy
+                                          </h6>
+                                          <div class="row">
+                                              <div class="col-md-6" id="newTypeInputGroup" style="display: none;">
+                                                  <div class="input-group input-group-static mb-4">
+                                                      <label class="text-info font-weight-bold text-xs text-uppercase">Tên loại mới</label>
+                                                      <input type="text" id="newTypeName" class="form-control">
+                                                  </div>
+                                              </div>
+                                              <div class="col-md-6">
+                                                  <div class="input-group input-group-static mb-4">
+                                                      <label class="text-info font-weight-bold text-xs text-uppercase">Hãng sản xuất</label>
+                                                      <input type="text" id="manufacturer" class="form-control" readonly>
+                                                  </div>
+                                              </div>
+                                              <div class="col-md-6">
+                                                  <div class="input-group input-group-static mb-4">
+                                                      <label class="text-info font-weight-bold text-xs text-uppercase">Model</label>
+                                                      <input type="text" id="model" class="form-control" readonly>
+                                                  </div>
+                                              </div>
+                                              <div class="col-md-6">
+                                                  <div class="input-group input-group-static mb-4">
+                                                      <label class="text-info font-weight-bold text-xs text-uppercase">Chu kỳ bảo trì (Ngày)</label>
+                                                      <input type="number" id="defaultMaintenanceCycle" class="form-control" readonly>
+                                                  </div>
+                                              </div>
+											  <div class="col-md-6">
+											      <div class="input-group input-group-static mb-4">
+											          <label class="text-info font-weight-bold text-xs text-uppercase">Tài liệu hướng dẫn</label>
+											          <div class="d-flex align-items-center w-100 mt-2">
+											              <label for="manualFile" class="btn btn-outline-info btn-sm mb-0 px-3">
+											                  <i class="material-symbols-rounded text-sm me-2">upload_file</i> Chọn tệp...
+											              </label>
+														  <span id="manualFileName" class="text-xs ms-3 text-secondary italic">
+														      <th:block th:if="${device.manualUrl != null}">
+														          <i class="material-symbols-rounded text-xs">description</i> 
+														          <a th:href="${device.manualUrl}" target="_blank" class="text-info font-weight-bold">Xem tài liệu hiện tại</a>
+														      </th:block>
+														      
+														      <th:block th:unless="${device.manualUrl != null}">
+														          Chưa có tệp nào được chọn
+														      </th:block>
+														  </span>
+											              <input type="file" id="manualFile" class="d-none" accept=".pdf,.doc,.docx" onchange="displayFileName()">
+											          </div>
+											      </div>
+											  </div>
+                                              <div class="col-12">
+                                                  <div class="input-group input-group-static mb-0">
+                                                      <label class="text-info font-weight-bold text-xs text-uppercase">Mô tả chi tiết kỹ thuật</label>
+                                                      <textarea id="typeDescription" class="form-control" rows="2" readonly placeholder="Mô tả các tính năng đặc thù của dòng máy này..."></textarea>
+                                                  </div>
+                                              </div>
+                                          </div>
+                                      </div>
+
+                                      <div class="input-group input-group-static mb-4">
+                                          <label class="text-info font-weight-bold text-xs text-uppercase">Ghi chú kỹ thuật</label>
+                                          <textarea id="notes" class="form-control" rows="3" 
+                                                    th:text="${device.notes}"
+                                                    placeholder="Nhập ghi chú vận hành hoặc lịch sử lắp đặt..."></textarea>
+                                      </div>
+
+                                      <div class="d-flex justify-content-end gap-2 mt-2">
+                                          <a th:href="@{/devices}" class="btn btn-light mb-0">Hủy bỏ</a>
+                                          <button type="button" onclick="submitForm()" class="btn bg-gradient-info mb-0 px-5">
+                                              <i class="material-symbols-rounded text-sm me-2">save</i> Lưu hồ sơ
+                                          </button>
+                                      </div>
+                                  </div>
+                              </div>
+                          </form>
+                      </div>
+                  </div>
+              </div>
+          </div>
+      </div>
+  </main>
+
+  <script th:src="@{/assets/js/core/popper.min.js}"></script>
+  <script th:src="@{/assets/js/core/bootstrap.min.js}"></script>
+  <script th:src="@{/assets/js/material-dashboard.min.js(v='3.2.0')}"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <script>
+	let imageChanged = false;
+	let manualChanged = false;
+      // 1. Hàm hiển thị tên file tài liệu (Global Scope)
+	  function displayFileName() {
+	      manualChanged = true; // Đánh dấu đã chọn PDF mới
+		  manualChanged = true; 
+		      const input = document.getElementById('manualFile');
+		      const fileNameDisplay = document.getElementById('manualFileName');
+		      if (input.files.length > 0) {
+		          // Hiện tên file mới vừa chọn
+		          fileNameDisplay.innerHTML = `<i class="material-symbols-rounded text-xs">add_circle</i> <span class="text-info font-weight-bold">${input.files[0].name}</span>`;
+		      }
+	  }
+
+      // 2. Logic chuyển đổi chế độ xem/nhập loại máy
+      function handleTypeChange() {
+		const select = document.getElementById('typeId');
+	    const selectedOption = select.options[select.selectedIndex];
+	    
+	    // Lấy dữ liệu từ data-attributes
+	    const manufacturer = selectedOption.getAttribute('data-manufacturer') || '';
+	    const model = selectedOption.getAttribute('data-model') || '';
+	    const cycle = selectedOption.getAttribute('data-cycle') || '';
+	    const description = selectedOption.getAttribute('data-description') || '';
+	    const manualUrl = selectedOption.getAttribute('data-manual-url') || ''; // Lấy link PDF cũ
+	    
+	    const detailSection = document.getElementById('typeDetailSection');
+	    const newTypeGroup = document.getElementById('newTypeInputGroup');
+	    const fileNameDisplay = document.getElementById('manualFileName');
+
+	    if (select.value === 'NEW') {
+	        detailSection.style.display = 'block';
+	        newTypeGroup.style.display = 'block';
+	        fileNameDisplay.innerText = "Chưa có tệp nào được chọn";
+	        // Reset các ô input để nhập mới
+	        ["manufacturer", "model", "defaultMaintenanceCycle", "typeDescription", "newTypeName"].forEach(id => {
+	            const el = document.getElementById(id);
+	            el.value = ''; el.readOnly = false;
+	        });
+	    } else if (select.value !== "") {
+	        detailSection.style.display = 'block';
+	        newTypeGroup.style.display = 'none';
+	        document.getElementById('manufacturer').value = manufacturer;
+	        document.getElementById('model').value = model;
+	        document.getElementById('defaultMaintenanceCycle').value = cycle;
+	        document.getElementById('typeDescription').value = description;
+
+	        // HIỂN THỊ LINK PDF HIỆN TẠI
+	        if (manualUrl) {
+	            fileNameDisplay.innerHTML = `<i class="material-symbols-rounded text-xs">description</i> <a href="${manualUrl}" target="_blank" class="text-info font-weight-bold">Xem tài liệu hiện tại</a>`;
+	        } else {
+	            fileNameDisplay.innerText = "Loại này chưa có tài liệu";
+	        }
+	    } else {
+	        detailSection.style.display = 'none';
+	    }
+      }
+
+      // 3. Xem trước ảnh
+	  function previewFile() {
+	      imageChanged = true; // Đánh dấu đã chọn ảnh mới
+	      const preview = document.getElementById('previewImg');
+	      const file = document.getElementById('imageFile').files[0];
+	      const reader = new FileReader();
+	      reader.onloadend = function () { preview.src = reader.result; }
+	      if (file) { reader.readAsDataURL(file); }
+	  }
+
+      // 4. Submit Form
+      function submitForm() {
+		const form = document.getElementById('deviceForm');
+		    const id = form.getAttribute('data-id');
+		    const url = id ? `/devices/edit/${id}` : `/devices/add`;
+		    const formData = new FormData();
+
+		    if (id) formData.append('id', id);
+		    formData.append('serialNumber', document.getElementById('serialNumber').value);
+		    formData.append('location', document.getElementById('location').value);
+		    formData.append('status', document.getElementById('status').value);
+		    formData.append('notes', document.getElementById('notes').value);
+
+		    const typeSelect = document.getElementById('typeId');
+		    if (typeSelect.value === 'NEW') {
+		        formData.append('newTypeName', document.getElementById('newTypeName').value);
+		        formData.append('manufacturer', document.getElementById('manufacturer').value);
+		        formData.append('model', document.getElementById('model').value);
+		        formData.append('defaultMaintenanceCycle', document.getElementById('defaultMaintenanceCycle').value);
+		        formData.append('typeDescription', document.getElementById('typeDescription').value);
+		    } else if (typeSelect.value !== "") {
+		        formData.append('typeId', typeSelect.value);
+		    }
+
+		    // ⭐ SỬA LỖI TRÙNG FILE: Chỉ gửi nếu isChanged = true
+		    const imgInp = document.getElementById('imageFile');
+		    if (imageChanged && imgInp.files.length > 0) {
+		        formData.append('imageFile', imgInp.files[0]);
+		    }
+
+		    // ⭐ SỬA LỖI KHÔNG LƯU PDF: Đưa ra ngoài khối 'NEW' để máy nào cũng gửi được
+		    const manualInp = document.getElementById('manualFile');
+		    if (manualChanged && manualInp.files.length > 0) {
+		        formData.append('manualFile', manualInp.files[0]);
+		    }
+
+          Swal.fire({ title: 'Đang xử lý...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+
+          fetch(url, { method: 'POST', body: formData })
+          .then(async response => {
+              if (response.ok) {
+                  Swal.fire({ title: 'Thành công!', text: 'Dữ liệu đã được lưu trữ an toàn.', icon: 'success' })
+                  .then(() => { window.location.href = '/devices'; });
+              } else {
+                  const errorMsg = await response.text();
+                  Swal.fire({ title: 'Lỗi!', text: errorMsg, icon: 'error' });
+              }
+          })
+          .catch(error => { Swal.fire({ title: 'Lỗi kết nối!', text: 'Vui lòng thử lại sau.', icon: 'error' }); });
+      }
+
+      window.onload = handleTypeChange;
+  </script>
+</body>
+</html>

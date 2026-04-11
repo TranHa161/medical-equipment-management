@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <link rel="apple-touch-icon" sizes="76x76" th:href="@{/assets/img/logo.png}">
+  <link rel="icon" type="image/png" th:href="@{/assets/img/logo.png}">
+  <title>Tổng quan - HUST MEDICAL</title>
+  
+  <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Inter:300,400,500,600,700,900" />
+  <link th:href="@{/assets/css/nucleo-icons.css}" rel="stylesheet" />
+  <link th:href="@{/assets/css/nucleo-svg.css}" rel="stylesheet" />
+  <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" />
+  <link id="pagestyle" th:href="@{/assets/css/material-dashboard.css(v='3.2.0')}" rel="stylesheet" />
+  <style>
+    /* Hiển thị ký hiệu cấm cho các trường chỉ đọc hoặc bị vô hiệu hóa */
+    input[readonly], 
+    input:disabled,
+    select:disabled,
+    textarea[readonly] {
+      cursor: not-allowed !important;
+      background-color: #f8f9fa !important; /* Đổi màu nền nhẹ để trông "bị khóa" */
+      opacity: 0.8;
+    }
+
+    /* Tạo đường kẻ đứt cho các ô input group tĩnh của Material Dashboard khi bị khóa */
+    .input-group.input-group-static input[readonly] {
+      border-bottom: 1px dashed #d2d6da !important;
+    }
+  </style>
+</head>
+
+<body class="g-sidenav-show bg-gray-100">
+  <aside th:replace="~{fragments/sidebar :: sidebar('users')}"></aside>
+	
+  <main class="main-content position-relative max-height-vh-100 h-100 border-radius-lg">
+    <div class="container-fluid py-4">
+      <div class="row">
+        <div class="col-lg-8 col-md-10 mx-auto">
+          <div class="card mt-4 shadow-lg">
+            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+              <div class="bg-gradient-info shadow-info border-radius-lg pt-4 pb-3">
+                <h6 class="text-white text-capitalize ps-3 mb-0">
+                  <i class="material-symbols-rounded me-2">person_add</i>
+                  <span th:text="${user.id != null} ? 'Quản lý tài khoản: ' + ${user.username} : 'Cấp tài khoản mới'">Form</span>
+                </h6>
+              </div>
+            </div>
+            
+            <div class="card-body p-4">
+              <form id="userForm" th:data-id="${user.id}">
+				<div class="row">
+			      <div th:class="${user.id == null} ? 'col-md-6' : 'col-12'">
+			        <div class="input-group input-group-static mb-4">
+			          <label class="text-info font-weight-bold text-xs text-uppercase">Tên đăng nhập</label>
+			          <input type="text" id="username" th:value="${user.username}" class="form-control" 
+			                 th:readonly="${user.id != null}" placeholder="Ví dụ: nva_tech01">
+			        </div>
+			      </div>
+
+			      <div class="col-md-6" th:if="${user.id == null}">
+			        <div class="input-group input-group-static mb-4">
+			          <label class="text-info font-weight-bold text-xs text-uppercase">Mật khẩu hệ thống</label>
+			          <input type="password" id="password" class="form-control" 
+			                 placeholder="Đặt mật khẩu mặc định (Ví dụ: Hust@123)">
+			        </div>
+			      </div>
+			    </div>
+
+                <div class="row" th:if="${user.id != null}">
+                  <div class="col-md-6">
+                    <div class="input-group input-group-static mb-4">
+                      <label class="text-info font-weight-bold text-xs text-uppercase">Họ và tên</label>
+                      <input type="text" id="fullName" th:value="${user.fullName}" class="form-control" readonly>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="input-group input-group-static mb-4">
+                      <label class="text-info font-weight-bold text-xs text-uppercase">Email</label>
+                      <input type="email" id="email" th:value="${user.email}" class="form-control" readonly>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="row">
+                  <div class="col-md-4" th:if="${user.id != null}">
+                    <div class="input-group input-group-static mb-4">
+                      <label class="text-info font-weight-bold text-xs text-uppercase">Số điện thoại</label>
+                      <input type="text" id="phone" th:value="${user.phone}" class="form-control" readonly>
+                    </div>
+                  </div>
+
+				  <div th:class="${user.id != null} ? 'col-md-4' : 'col-md-6'">
+				    <div class="input-group input-group-static mb-4">
+				      <label for="roleId" class="text-info font-weight-bold text-xs text-uppercase">Vai trò hệ thống</label>
+				      <select class="form-control" id="roleId">
+				        <option th:each="role : ${roles}" 
+				                th:value="${role.id}" 
+				                th:text="${role.roleName == 'ADMIN' ? 'QUẢN LÝ' : 
+				                          (role.roleName == 'TECHNICIAN' ? 'KỸ THUẬT VIÊN' : 'NGƯỜI DÙNG CUỐI')}"
+				                th:selected="${role.roleName == user.roleName}">
+				        </option>
+				      </select>
+				    </div>
+				  </div>
+
+                  <div th:class="${user.id != null} ? 'col-md-4' : 'col-md-6'">
+                    <div class="input-group input-group-static mb-4">
+                      <label for="isActive" class="text-info font-weight-bold text-xs text-uppercase">Trạng thái tài khoản</label>
+                      <select class="form-control" id="isActive">
+                        <option value="true" th:selected="${user.isActive == true}">ĐANG HOẠT ĐỘNG</option>
+                        <option value="false" th:selected="${user.isActive == false}">TẠM KHÓA</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="d-flex justify-content-end mt-4 gap-2">
+                  <a th:href="@{/users}" class="btn btn-light m-0 shadow-none">Hủy bỏ</a>
+                  <button type="button" onclick="submitUserForm()" class="btn bg-gradient-info m-0">
+                    <i class="material-symbols-rounded text-sm me-2">save</i> Lưu cấu hình
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+	  
+	  <script th:src="@{/assets/js/core/popper.min.js}"></script>
+		  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+	      <script th:src="@{/assets/js/core/bootstrap.min.js}"></script>
+	      <script th:src="@{/assets/js/plugins/perfect-scrollbar.min.js}"></script>
+	      <script th:src="@{/assets/js/plugins/smooth-scrollbar.min.js}"></script>
+	      <script th:src="@{/assets/js/plugins/chartjs.min.js}"></script>
+	      <script th:src="@{/assets/js/material-dashboard.min.js(v='3.2.0')}"></script>
+		  	<script>
+				function submitUserForm() {
+				    const form = document.getElementById('userForm');
+				    const id = form.getAttribute('data-id');
+
+				    // Lấy giá trị an toàn: Nếu không tìm thấy Element thì trả về null
+				    const data = {
+				        id: id ? parseInt(id) : null,
+				        username: document.getElementById('username').value,
+				        roleId: parseInt(document.getElementById('roleId').value),
+				        isActive: document.getElementById('isActive').value === 'true',
+				        
+				        // Chỉ lấy mật khẩu nếu ô nhập liệu tồn tại (Chế độ tạo mới)
+				        password: document.getElementById('password') ? document.getElementById('password').value : null,
+				        
+				        // Thông tin nhân sự (nếu có)
+				        fullName: document.getElementById('fullName') ? document.getElementById('fullName').value : null,
+				        email: document.getElementById('email') ? document.getElementById('email').value : null,
+				        phone: document.getElementById('phone') ? document.getElementById('phone').value : null
+				    };
+
+				    Swal.fire({ title: 'Đang xử lý...', didOpen: () => { Swal.showLoading(); } });
+
+				    fetch('/users/save', {
+				        method: 'POST',
+				        headers: { 'Content-Type': 'application/json' },
+				        body: JSON.stringify(data)
+				    })
+				    .then(async response => {
+				        if (response.ok) {
+				            Swal.fire({
+				                title: 'Thành công!',
+				                text: id ? 'Cấu hình tài khoản đã được cập nhật.' : 'Tài khoản mới đã được khởi tạo.',
+				                icon: 'success'
+				            }).then(() => { window.location.href = '/users'; });
+				        } else {
+				            const errorMsg = await response.text();
+				            Swal.fire('Lỗi!', errorMsg, 'error');
+				        }
+				    })
+				    .catch(error => { Swal.fire('Lỗi kết nối', 'Vui lòng thử lại sau.', 'error'); });
+				}
+		    </script>
+	  </body>
+	  </html>

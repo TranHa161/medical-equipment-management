@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <link rel="apple-touch-icon" sizes="76x76" th:href="@{/assets/img/logo.png}">
+  <link rel="icon" type="image/png" th:href="@{/assets/img/logo.png}">
+  <title>Lịch bảo trì - HUST MEDICAL</title>
+  
+  <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Inter:300,400,500,600,700,900" />
+  <link th:href="@{/assets/css/nucleo-icons.css}" rel="stylesheet" />
+  <link th:href="@{/assets/css/nucleo-svg.css}" rel="stylesheet" />
+  <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" />
+  <link id="pagestyle" th:href="@{/assets/css/material-dashboard.css(v='3.2.0')}" rel="stylesheet" />
+</head>
+
+<body class="g-sidenav-show bg-gray-100">
+  <aside th:replace="~{fragments/sidebar :: sidebar('schedules')}"></aside>
+  <main class="main-content position-relative max-height-vh-100 h-100 border-radius-lg">
+      <div class="container-fluid py-4">
+        <div class="row">
+          <div class="col-lg-8 col-md-10 mx-auto">
+            <div class="card mt-4">
+              <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                <div class="bg-gradient-info shadow-info border-radius-lg pt-4 pb-3">
+                  <h6 class="text-white text-capitalize ps-3" 
+                      th:text="${schedule.id != null} ? 'Cập nhật lịch trình' : 'Thiết lập lịch bảo trì mới'">Form lịch trình</h6>
+                </div>
+              </div>
+			  <div class="card-body p-4">
+			      <div th:if="${device != null}" class="bg-gray-100 border-radius-lg p-3 mb-5 border">
+			          <label class="text-xs font-weight-bold text-uppercase text-secondary mb-1 d-block">Thiết bị đang thiết lập</label>
+			          <div class="d-flex align-items-center">
+			              <i class="material-symbols-rounded text-info me-2">medical_services</i>
+			              <h5 class="mb-0 font-weight-bolder text-info" th:text="${device.name + ' (' + device.serialNumber + ')'}">
+			                  Heart Rate Monitor (HRM-001)
+			              </h5>
+			          </div>
+			      </div>
+
+			      <form id="scheduleForm" th:data-id="${schedule.id}" th:data-device-id="${device?.id}">
+			          
+					<div class="input-group input-group-static mb-5">
+					    <label class="ms-0 font-weight-bold">Thiết bị y tế</label>
+
+					    <select th:if="${device == null}" class="form-control" id="deviceId">
+					        <option value="">-- Click để chọn thiết bị --</option>
+					        <option th:each="d : ${devices}" 
+					                th:value="${d.id}" 
+					                th:text="${d.name + ' (' + d.serialNumber + ')'}">
+					        </option>
+					    </select>
+
+					    <div th:if="${device != null}" class="w-100">
+					        <input type="hidden" id="deviceId" th:value="${device.id}">
+					        <div class="form-control bg-light">
+					            <span th:text="${device.name + ' (' + device.serialNumber + ')'}">Tên máy</span>
+					        </div>
+					    </div>
+					</div>
+
+			          <div class="row mt-2">
+			              <div class="col-md-6">
+			                  <div class="input-group input-group-static mb-5">
+			                      <label class="ms-0 font-weight-bold">Loại lịch trình</label>
+			                      <select class="form-control" id="scheduleType">
+			                          <option value="DAILY" th:selected="${schedule.scheduleType == 'DAILY'}">Bảo trì theo Ngày</option>
+			                          <option value="WEEKLY" th:selected="${schedule.scheduleType == 'WEEKLY'}">Bảo trì theo Tuần</option>
+			                          <option value="MONTHLY" th:selected="${schedule.scheduleType == 'MONTHLY'}">Bảo trì theo Tháng</option>
+			                          <option value="YEARLY" th:selected="${schedule.scheduleType == 'YEARLY'}">Bảo trì theo Năm</option>
+			                      </select>
+			                  </div>
+			              </div>
+			              <div class="col-md-6">
+			                  <div class="input-group input-group-static mb-5">
+			                      <label class="ms-0 font-weight-bold">Chu kỳ bảo trì</label>
+			                      <input type="number" id="cycleValue" th:value="${schedule.cycleValue}" 
+			                             class="form-control" placeholder="Ví dụ: 6 (tháng)">
+			                  </div>
+			              </div>
+			          </div>
+
+			          <div class="row">
+			              <div class="col-md-6">
+			                  <div class="input-group input-group-static mb-5">
+			                      <label class="ms-0 font-weight-bold">Ngày bắt đầu áp dụng</label>
+			                      <input type="date" id="startDate" th:value="${schedule.startDate}" class="form-control">
+			                  </div>
+			              </div>
+			              <div class="col-md-6">
+			                  <div class="input-group input-group-static mb-5">
+			                      <label class="ms-0 font-weight-bold">Trạng thái lịch trình</label>
+			                      <select class="form-control" id="isActive">
+			                          <option value="true" th:selected="${schedule.isActive == true}">Kích hoạt ngay</option>
+			                          <option value="false" th:selected="${schedule.isActive == false}">Tạm dừng</option>
+			                      </select>
+			                  </div>
+			              </div>
+			          </div>
+
+			          <div class="d-flex justify-content-end mt-5">
+			              <a th:href="@{/schedules}" class="btn btn-outline-secondary m-0">Hủy bỏ</a>
+			              <button type="button" onclick="submitScheduleForm()" class="btn bg-gradient-info m-0 ms-3 px-4">
+			                  <i class="material-symbols-rounded text-sm me-2">save</i> Lưu lịch trình
+			              </button>
+			          </div>
+			      </form>
+			  </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  	  
+	<script th:src="@{/assets/js/core/popper.min.js}"></script>
+		  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+		      <script th:src="@{/assets/js/core/bootstrap.min.js}"></script>
+		      <script th:src="@{/assets/js/plugins/perfect-scrollbar.min.js}"></script>
+		      <script th:src="@{/assets/js/plugins/smooth-scrollbar.min.js}"></script>
+		      <script th:src="@{/assets/js/plugins/chartjs.min.js}"></script>
+		      <script th:src="@{/assets/js/material-dashboard.min.js(v='3.2.0')}"></script>
+    <script>
+		function submitScheduleForm() {
+		    const form = document.getElementById('scheduleForm');
+		    const id = form.getAttribute('data-id');
+			// 1. Lấy ID thiết bị (Dù là từ Select hay Input Hidden đều được)
+			    const deviceIdValue = document.getElementById('deviceId').value;
+
+			    if (!deviceIdValue) {
+			        Swal.fire('Thiếu thông tin', 'Vui lòng chọn một thiết bị!', 'warning');
+			        return;
+			    }
+
+			    // 2. Gom dữ liệu
+			    const data = {
+			        // Lấy ID lịch nếu là sửa, null nếu là thêm mới
+			        id: document.getElementById('scheduleForm').getAttribute('data-id') || null,
+			        deviceId: parseInt(deviceIdValue),
+			        scheduleType: document.getElementById('scheduleType').value,
+			        cycleValue: parseInt(document.getElementById('cycleValue').value),
+			        startDate: document.getElementById('startDate').value,
+			        isActive: document.getElementById('isActive').value === 'true'
+			    };
+
+		    Swal.fire({
+		        title: 'Đang lưu...',
+		        didOpen: () => Swal.showLoading()
+		    });
+
+		    fetch('/schedules/save', {
+		        method: 'POST',
+		        headers: { 'Content-Type': 'application/json' },
+		        body: JSON.stringify(data)
+		    })
+		    .then(async response => {
+		        if (response.ok) {
+		            Swal.fire({
+		                title: 'Thành công!',
+		                text: id ? 'Lịch đã được cập nhật.' : 'Lịch mới đã được tạo.',
+		                icon: 'success'
+		            }).then(() => {
+		                window.location.href = '/schedules';
+		            });
+		        } else {
+		            const err = await response.text();
+		            Swal.fire('Lỗi!', err, 'warning');
+		        }
+		    })
+		    .catch(error => {
+		        Swal.fire('Lỗi hệ thống!', 'Không kết nối được máy chủ.', 'error');
+		    });
+		}
+    </script>
+  </body>
+  </html>
