@@ -50,6 +50,9 @@ public class WorkOrder {
     @Column(name = "CreatedAt")
     private java.time.LocalDateTime createdAt;
     
+    private String evidenceBeforeUrl; 
+    private String evidenceAfterUrl;
+    
     @PrePersist
     protected void onCreate() {
         this.createdAt = java.time.LocalDateTime.now();

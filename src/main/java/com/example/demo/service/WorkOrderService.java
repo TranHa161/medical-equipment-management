@@ -88,20 +88,17 @@ public class WorkOrderService {
      * UC08: Admin duyệt và có thể chỉ định Kỹ thuật viên cụ thể
      */
     public WorkOrder createWorkOrderFromRequest(Long requestId, Long manualTechId) {
-        // 1. Kiểm tra tồn tại
         MaintenanceRequests request = requestRepository.findById(requestId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy phiếu!"));
 
-        // 2. Quyết định chọn ai: Nếu Admin chọn người thì dùng, không thì chạy thuật toán
         Users assignedTech;
         if (manualTechId != null) {
             assignedTech = usersRepository.findById(manualTechId)
                     .orElseThrow(() -> new RuntimeException("Kỹ thuật viên được chỉ định không tồn tại!"));
         } else {
-            assignedTech = findBestAvailableTechnicianEntity(); // Chạy thuật toán tự động
+            assignedTech = findBestAvailableTechnicianEntity();
         }
 
-        // 3. Tạo WorkOrder (giữ nguyên logic cũ)
         WorkOrder order = new WorkOrder();
         order.setDevice(request.getDevice());
         order.setRequest(request);
@@ -119,14 +116,14 @@ public class WorkOrderService {
     }
 
 
-    /**
-     * UC09: Kỹ thuật viên hoàn thành công việc
-     */
+    @Transactional
     public void completeWorkOrder(Long workOrderId,
-                                  String currentUserName,
-                                  String result,
-                                  java.math.BigDecimal cost) {
-
+            String currentUserName,
+            String result,
+            java.math.BigDecimal cost,
+            String imgBefore, 
+            String imgAfter) 
+    {
         WorkOrder order = workOrderRepository.findById(workOrderId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy phiếu công việc!"));
 
@@ -134,34 +131,39 @@ public class WorkOrderService {
             throw new RuntimeException("Bạn không được phân công phiếu này!");
         }
 
-        // Hoàn thành WorkOrder
-        order.setStatus(WorkOrderStatus.COMPLETED);
+        order.setEvidenceBeforeUrl(imgBefore);
+        order.setEvidenceAfterUrl(imgAfter);
+        order.setStatus(WorkOrderStatus.COMPLETED); 
         workOrderRepository.save(order);
 
-        // Đóng Request (nếu có)
         MaintenanceRequests request = order.getRequest();
         if (request != null) {
             request.setStatus(RequestStatus.COMPLETED);
             requestRepository.save(request);
         }
 
-        // Cập nhật trạng thái thiết bị
-        Device device = order.getDevice();
-        device.setStatus(DeviceStatus.ACTIVE);
-        device.setLastMaintenanceDate(LocalDate.now());
-
-        // Lưu lịch sử bảo trì
         MaintenanceHistory history = new MaintenanceHistory();
         history.setWorkOrder(order);
-        history.setDevice(device);
+        history.setDevice(order.getDevice());
         history.setTechnician(order.getTechnician());
         history.setMaintenanceDate(java.time.LocalDateTime.now());
         history.setResult(result);
-        history.setCost(cost);
+        history.setCost(cost); 
+        history.setStatus("PENDING_APPROVAL"); 
+
+        if (order.getDevice() != null && order.getDevice().getCompany() != null) {
+            history.setCompanyId(order.getDevice().getCompany()); 
+        }
 
         historyRepository.save(history);
+
+        notificationService.notifyAccountantForApproval(
+            order.getId(), 
+            order.getDevice().getDeviceType().getTypeName(), 
+            order.getTechnician().getFullName()
+        );
     }
-    
+	
     public WorkOrder createWorkOrderFromSchedule(Long scheduleId) {
 
         MaintenanceSchedule schedule = scheduleRepository.findById(scheduleId)
@@ -183,8 +185,8 @@ public class WorkOrderService {
         WorkOrder order = new WorkOrder();
         order.setDevice(device);
         order.setTechnician(bestTech);
-        order.setSchedule(schedule);      // ⭐ liên kết schedule
-        order.setRequest(null);            // ⭐ không có request
+        order.setSchedule(schedule);
+        order.setRequest(null);
         order.setStatus(WorkOrderStatus.PROGRESSING);
         device.setStatus(DeviceStatus.MAINTENANCE);
 
@@ -197,19 +199,16 @@ public class WorkOrderService {
     }
 
     
-    @Scheduled(cron = "0 0 1 * * ?") // Chạy tự động lúc 1h sáng hàng ngày
-    @Transactional // Đảm bảo tính toàn vẹn dữ liệu khi tạo nhiều phiếu cùng lúc
+    @Scheduled(cron = "0 0 1 * * ?")
+    @Transactional
     public void autoCreateWorkOrderFromSchedule() {
-        // 1. Lấy tất cả lịch bảo trì đang còn hiệu lực
         List<MaintenanceSchedule> schedules = scheduleRepository.findByIsActiveTrue();
         LocalDate today = LocalDate.now();
         int createdCount = 0; 
 
         for (MaintenanceSchedule schedule : schedules) {
-            // 2. Kiểm tra xem thiết bị đã đến ngày bảo trì chưa
             if (!isDue(schedule, today)) continue;
 
-            // 3. Kiểm tra xem thiết bị này đã có phiếu "Đang xử lý" chưa để tránh tạo trùng
             boolean exists = workOrderRepository.existsByScheduleAndStatusIn(
                         schedule,
                         List.of(WorkOrderStatus.PROGRESSING)
@@ -217,25 +216,18 @@ public class WorkOrderService {
 
             if (exists) continue;
 
-            // 4. Tạo WorkOrder và tăng biến đếm
-            // Hàm này bên trong đã có logic đổi trạng thái máy sang MAINTENANCE
             WorkOrder newOrder = createWorkOrderFromSchedule(schedule.getId());
             if (newOrder != null) {
                 createdCount++;
             }
         }
 
-        // 5. Gửi báo cáo tổng hợp cho Admin qua NotificationService
         if (createdCount > 0) {
-            // Phải gọi qua 'notificationService' đã được inject vào
             notificationService.sendAdminAutoSummaryReport(createdCount);
         }
     }
 
 
-    /**
-     * Gửi email thông báo (không ảnh hưởng transaction chính)
-     */
     @org.springframework.scheduling.annotation.Async
     public void sendEmail(Users bestTech, WorkOrder order) {
         try {
@@ -252,7 +244,6 @@ public class WorkOrderService {
     
     @Transactional
     public WorkOrder cancelWorkOrder(Long workOrderId) {
-        // 1. Tìm và kiểm tra WorkOrder
         WorkOrder order = workOrderRepository.findById(workOrderId)
                 .orElseThrow(() -> new RuntimeException("WorkOrder không tồn tại!"));
 
@@ -260,22 +251,19 @@ public class WorkOrderService {
             throw new RuntimeException("Không thể hủy lệnh đã hoàn thành!");
         }
 
-        // 2. Lưu lại thông tin kỹ thuật viên trước khi xử lý (để gửi mail)
         Users technician = order.getTechnician();
-
-        // 3. Thực hiện Soft Delete và hoàn tác trạng thái
+        
         order.setStatus(WorkOrderStatus.CANCELLED);
         
         if (order.getRequest() != null) {
-            order.getRequest().setStatus(RequestStatus.NEW); // Trả về hàng đợi duyệt
+            order.getRequest().setStatus(RequestStatus.NEW);
         }
         if (order.getDevice() != null) {
-            order.getDevice().setStatus(DeviceStatus.BROKEN); // Máy vẫn đang hỏng
+            order.getDevice().setStatus(DeviceStatus.BROKEN);
         }
 
         WorkOrder savedOrder = workOrderRepository.save(order);
 
-        // 4. GỬI MAIL THÔNG BÁO HỦY
         if (technician != null) {
             sendCancellationEmail(technician, savedOrder);
         }
@@ -283,9 +271,7 @@ public class WorkOrderService {
         return savedOrder;
     }
 
-    /**
-     * Gửi email thông báo hủy công việc (chạy bất đồng bộ)
-     */
+
     @org.springframework.scheduling.annotation.Async
     public void sendCancellationEmail(Users tech, WorkOrder order) {
         try {
@@ -317,13 +303,10 @@ public class WorkOrderService {
             java.time.LocalDateTime startDate, 
             java.time.LocalDateTime endDate) {   
         
-        // 1. Tiền xử lý các chuỗi String (Giữ nguyên logic IS NULL OR ...)
         String cleanDevice = (deviceSearch != null && !deviceSearch.trim().isEmpty()) ? deviceSearch.trim() : null;
         String cleanTech = (techSearch != null && !techSearch.trim().isEmpty()) ? techSearch.trim() : null;
         String cleanUser = (username != null && !username.trim().isEmpty()) ? username.trim() : null;
 
-        // 2. Gọi Repository thực hiện truy vấn với đầy đủ 6 tham số
-        // Lưu ý: startDate và endDate đã được Controller parse sang LocalDateTime nên truyền trực tiếp
         return workOrderRepository.filterWorkOrders(
                 cleanDevice, 
                 cleanTech, 
@@ -334,12 +317,10 @@ public class WorkOrderService {
         );
     }
     
-    // Lấy tất cả WorkOrder chưa bị hủy (dành cho Admin)
     public List<WorkOrder> getAllActiveWorkOrders() {
         return workOrderRepository.findByStatusNot(WorkOrderStatus.CANCELLED);
     }
 
-    // Lấy WorkOrder của 1 technician (chưa bị hủy)
     public List<WorkOrder> getWorkOrdersByTechnician(Long technicianId) {
         return workOrderRepository.findByTechnicianIdAndStatusNot(technicianId, WorkOrderStatus.CANCELLED);
     }
@@ -357,7 +338,6 @@ public class WorkOrderService {
     }
     
     public List<WorkOrder> getWorkOrdersByTechnicianUsername(String username) {
-        // Tìm User trước để lấy ID hoặc gọi trực tiếp từ Repository nếu có hỗ trợ
         return workOrderRepository.findByTechnician_UsernameAndStatusNot(username, WorkOrderStatus.CANCELLED);
     }
     

@@ -44,25 +44,19 @@ public class WorkOrderController {
         boolean isAdmin = auth.getAuthorities().stream()
                               .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
 
-        // 1. Phân quyền truy cập dữ liệu
         String filterUsername = isAdmin ? null : currentUsername;
         String finalTechSearch = isAdmin ? techSearch : null;
         
-        // Chuyển đổi String từ giao diện sang LocalDateTime để truyền vào Repository
         java.time.LocalDateTime start = (startDate != null && !startDate.isEmpty()) 
                                         ? java.time.LocalDate.parse(startDate).atStartOfDay() : null;
         java.time.LocalDateTime end = (endDate != null && !endDate.isEmpty()) 
                                       ? java.time.LocalDate.parse(endDate).atTime(23, 59, 59) : null;
 
-        // 2. Gọi Service với đầy đủ các tham số lọc, bao gồm cả ngày tháng
-        // Lưu ý: Trân Trân cần cập nhật signature của hàm filterWorkOrders trong Service nhé
         List<WorkOrder> orders = workOrderService.filterWorkOrders(
                 deviceSearch, finalTechSearch, status, filterUsername, start, end);
 
-        // 3. Đưa dữ liệu đã map sang DTO lên giao diện
         model.addAttribute("orderList", orders.stream().map(this::mapToDTO).toList());
         
-        // 4. Giữ lại các giá trị lọc trên Form (Để các ô mm/dd/yyyy không bị mất giá trị sau khi Load)
         model.addAttribute("deviceSearch", deviceSearch);
         model.addAttribute("techSearch", finalTechSearch);
         model.addAttribute("startDate", startDate);
@@ -71,78 +65,53 @@ public class WorkOrderController {
 
         return "work-orders";
     }
-    
-    /* =====================================================
-     * ADMIN LOGIC
-     * ===================================================== */
 
-    /**
-     * Admin duyệt báo hỏng.
-     * Hỗ trợ: /work-orders/from-request/5 (Tự động chọn Best Tech)
-     * Hoặc: /work-orders/from-request/5?techId=10 (Admin chỉ định người làm)
-     */
     @GetMapping("/from-request/{requestId}")
     public String createFromRequest(
             @PathVariable Long requestId,
             @RequestParam(required = false) Long techId) {
 
-        // Gọi Service xử lý logic Hybrid (Thủ công hoặc Tự động)
         workOrderService.createWorkOrderFromRequest(requestId, techId);
 
-        // Sau khi duyệt, quay lại trang danh sách phiếu báo hỏng
         return "redirect:/requests";
     }
     
     @PostMapping("/cancel/{id}")
-    @ResponseBody // Để trả về JSON cho JavaScript xử lý thông báo thành công
+    @ResponseBody
     public ResponseEntity<?> cancel(@PathVariable Long id) {
         try {
             WorkOrder order = workOrderService.cancelWorkOrder(id);
             
-            // Trả về DTO sau khi đã cập nhật
             return ResponseEntity.ok(mapToDTO(order));
         } catch (Exception e) {
-            // Trả về thông báo lỗi nếu không hủy được (ví dụ: phiếu đã hoàn thành)
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
-    /* =====================================================
-     * TECHNICIAN LOGIC
-     * ===================================================== */
-
-    /**
-     * Kỹ thuật viên: Hoàn thành phiếu công việc
-     */
     @PostMapping("/complete/{workOrderId}")
     @ResponseBody
     public ResponseEntity<String> complete(
             @PathVariable Long workOrderId,
-            @RequestBody Map<String, Object> payload, // Nhận dữ liệu từ SweetAlert2
+            @RequestBody Map<String, Object> payload,
             Authentication auth) {
 
-        // 1. Lấy thông tin người dùng đang đăng nhập
         String currentUsername = auth.getName();
         
-        // 2. Lấy kết quả và chi phí từ payload
         String result = (String) payload.get("result");
         BigDecimal cost = new BigDecimal(payload.get("cost").toString());
+        
+        String evidenceBeforeUrl = (String) payload.get("evidenceBeforeUrl");
+        String evidenceAfterUrl = (String) payload.get("evidenceAfterUrl");
 
-        // 3. Gọi Service xử lý nghiệp vụ (Cập nhật Status máy, lưu lịch sử)
-        workOrderService.completeWorkOrder(workOrderId, currentUsername, result, cost);
+        workOrderService.completeWorkOrder(workOrderId, currentUsername, result, cost, evidenceBeforeUrl, evidenceAfterUrl);
 
-        return ResponseEntity.ok("Hoàn thành công việc thành công!");
+        return ResponseEntity.ok("Đã nộp báo cáo hoàn thành, đang chờ nghiệm thu!");
     }
-
-    /* =====================================================
-     * HELPER MAPPERS (Nên tách ra Class riêng nếu dự án lớn hơn)
-     * ===================================================== */
 
     private WorkOrderDTO mapToDTO(WorkOrder order) {
         WorkOrderDTO dto = new WorkOrderDTO();
         dto.setId(order.getId());
         
-        // Định dạng tên máy theo kiểu "Tên loại (Serial)" đồng bộ với Dashboard
         if (order.getDevice() != null) {
             dto.setDeviceId(order.getDevice().getId());
             String deviceName = order.getDevice().getDeviceType().getTypeName() 

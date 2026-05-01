@@ -48,7 +48,10 @@ public class Device {
 	@Column(name = "LastMaintenanceDate")
     private java.time.LocalDate lastMaintenanceDate;
 	
-	// Bổ sung vào class Device
+	@ManyToOne
+    @JoinColumn(name = "company_id")
+    private Company company;
+	
 	@Column(name = "ImageUrl", length = 255)
 	private String imageUrl; // Lưu đường dẫn file hoặc URL ảnh thiết bị
 

@@ -51,6 +51,6 @@ public interface WorkOrderRepository extends JpaRepository<WorkOrder, Long> {
     	        @Param("techSearch") String techSearch,
     	        @Param("status") WorkOrderStatus status,
     	        @Param("username") String username,
-    	        @Param("startDate") java.time.LocalDateTime startDate, // Chuyển kiểu dữ liệu sang LocalDateTime
-    	        @Param("endDate") java.time.LocalDateTime endDate);     // Chuyển kiểu dữ liệu sang LocalDateTime
+    	        @Param("startDate") java.time.LocalDateTime startDate, 
+    	        @Param("endDate") java.time.LocalDateTime endDate);     
 }

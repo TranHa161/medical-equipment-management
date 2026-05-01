@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import com.example.demo.model.BulkInvoice;
 import com.example.demo.model.MaintenanceHistory;
 
 @Repository
@@ -33,4 +34,13 @@ public interface MaintenanceHistoryRepository extends JpaRepository<MaintenanceH
     	    @Param("techName") String techName,
     	    @Param("startDate") java.time.LocalDateTime startDate,
     	    @Param("endDate") java.time.LocalDateTime endDate);
+    
+    @Query("SELECT mh FROM MaintenanceHistory mh " +
+    	       "JOIN mh.workOrder wo " +
+    	       "WHERE wo.device.company.id = :companyId " +
+    	       "AND mh.status = 'APPROVED' " +
+    	       "AND mh.bulkInvoice IS NULL")
+     List<MaintenanceHistory> findPendingHistoryByCompany(@Param("companyId") Integer companyId);
+
+	List<MaintenanceHistory> findByBulkInvoice(BulkInvoice invoice);
 }

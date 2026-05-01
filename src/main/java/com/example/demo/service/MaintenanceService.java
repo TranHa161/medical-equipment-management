@@ -1,5 +1,6 @@
 package com.example.demo.service;
 
+import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -22,6 +23,7 @@ import com.example.demo.model.MaintenanceHistory;
 import com.example.demo.model.MaintenanceRequests;
 import com.example.demo.model.MaintenanceSchedule;
 import com.example.demo.model.Users;
+import com.example.demo.model.WorkOrder;
 import com.example.demo.repository.DeviceRepository;
 import com.example.demo.repository.MaintenanceHistoryRepository;
 import com.example.demo.repository.MaintenanceRequestsRepository;
@@ -425,6 +427,32 @@ public class MaintenanceService {
         return schedules.stream()
                 .map(this::mapScheduleToDTO)
                 .toList();
+    }
+    
+    @Transactional
+    public void approveMaintenanceHistory(Long historyId, String staffUserName) {
+        MaintenanceHistory history = historyRepository.findById(historyId)
+                .orElseThrow(() -> new RuntimeException("Lịch sử bảo trì không tồn tại"));
+
+        Users staff = usersRepository.findByUsername(staffUserName)
+                .orElseThrow(() -> new RuntimeException("Người dùng không hợp lệ"));
+
+        WorkOrder order = history.getWorkOrder();
+        if (order.getEvidenceBeforeUrl() == null || order.getEvidenceAfterUrl() == null) {
+            throw new RuntimeException("Kỹ thuật viên chưa cung cấp đủ ảnh bằng chứng!");
+        }
+
+        history.setStatus("APPROVED");
+        
+        Device device = order.getDevice();
+        if (device != null) {
+            device.setStatus(DeviceStatus.ACTIVE);
+            device.setLastMaintenanceDate(LocalDate.now());
+        }
+
+        // Lưu lại
+        historyRepository.save(history);
+        // Nếu bạn muốn lưu cả người duyệt vào history thì thêm field approvedBy vào Entity History nhé!
     }
 	    
     private MaintenanceScheduleResponseDTO mapScheduleToDTO(MaintenanceSchedule schedule) {

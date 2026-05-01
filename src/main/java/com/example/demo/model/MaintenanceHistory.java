@@ -41,6 +41,21 @@ public class MaintenanceHistory {
 
     @Column(name = "Cost")
     private java.math.BigDecimal cost;
+    
+    @Column(name = "Status")
+    private String status;
+    
+    @ManyToOne
+    @JoinColumn(name = "bulk_invoice_id")
+    private BulkInvoice bulkInvoice;
+    
+    @ManyToOne
+    @JoinColumn(name = "asset_approved_by")
+    private Users approvedBy;
+    
+    @ManyToOne
+    @JoinColumn(name = "company_id")
+    private Company companyId;
 
 	public Long getId() {
 		return id;
@@ -96,5 +111,37 @@ public class MaintenanceHistory {
 
 	public void setCost(java.math.BigDecimal cost) {
 		this.cost = cost;
+	}
+
+	public BulkInvoice getBulkInvoice() {
+		return bulkInvoice;
+	}
+
+	public void setBulkInvoice(BulkInvoice bulkInvoice) {
+		this.bulkInvoice = bulkInvoice;
+	}
+
+	public String getStatus() {
+		return status;
+	}
+
+	public void setStatus(String status) {
+		this.status = status;
+	}
+
+	public Users getApprovedBy() {
+		return approvedBy;
+	}
+
+	public void setApprovedBy(Users approvedBy) {
+		this.approvedBy = approvedBy;
+	}
+
+	public Company getCompanyId() {
+		return companyId;
+	}
+
+	public void setCompanyId(Company companyId) {
+		this.companyId = companyId;
 	}
 }

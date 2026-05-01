@@ -133,4 +133,49 @@ public class NotificationService {
             }
         }
     }
+
+    public void notifyAccountantForApproval(Long workOrderId, String deviceName, String technicianName) {
+        List<String> accountantEmails = usersRepository.findByRole_RoleName("")
+        							.stream()
+                                    .map(user -> user.getEmail())
+                                    .filter(email -> email != null && !email.isEmpty())
+                                    .toList();
+
+        if (accountantEmails.isEmpty()) {
+            System.out.println("Không tìm thấy email người duyệt để gửi thông báo!");
+            return;
+        }
+
+        for (String email : accountantEmails) {
+            try {
+                MimeMessage message = mailSender.createMimeMessage();
+                MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+                helper.setTo(email);
+                helper.setSubject("[HUST MEDICAL] YÊU CẦU NGHIỆM THU - Phiếu #" + workOrderId);
+
+                String htmlContent = 
+                    "<div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 10px; overflow: hidden;'>" +
+                        "<div style='background: linear-gradient(to right, #fb6340, #fbb140); padding: 20px; text-align: center;'>" +
+                            "<h2 style='color: white; margin: 0;'>YÊU CẦU NGHIỆM THU</h2>" +
+                        "</div>" +
+                        "<div style='padding: 30px; color: #444; line-height: 1.6;'>" +
+                            "<p>Chào bạn,</p>" +
+                            "<p>Phiếu sửa chữa/bảo trì cho thiết bị <strong>" + deviceName + "</strong> đã được hoàn thành bởi kỹ thuật viên <strong>" + technicianName + "</strong>.</p>" +
+                            "<div style='background-color: #fff4e5; border-left: 4px solid #fb6340; padding: 15px; margin: 20px 0;'>" +
+                                "Vui lòng đăng nhập hệ thống để <strong>kiểm tra hình ảnh bằng chứng</strong> và xác nhận nghiệm thu để thiết bị có thể hoạt động trở lại." +
+                            "</div>" +
+                            "<div style='text-align: center; margin: 30px 0;'>" +
+                                "<a href='http://localhost:8080/approvals' style='background-color: #fb6340; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;'>ĐẾN TRANG NGHIỆM THU</a>" +
+                            "</div>" +
+                        "</div>"+
+                    "</div>";
+
+                helper.setText(htmlContent, true);
+                mailSender.send(message);
+            } catch (Exception e) {
+                System.err.println("Lỗi gửi thông báo nghiệm thu: " + e.getMessage());
+            }
+        }
+    }
 }

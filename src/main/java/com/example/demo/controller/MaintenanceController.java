@@ -82,13 +82,10 @@ public class MaintenanceController {
     
     @GetMapping("/requests/add")
     public String showAddRequestForm(Model model) {
-        // 1. Phải khởi tạo đúng đối tượng Báo hỏng (Request), không dùng Schedule
         MaintenanceRequestsResponseDTO requestDTO = new MaintenanceRequestsResponseDTO();
         
-        // 2. Đặt tên attribute là "requestDTO" để khớp với file HTML
         model.addAttribute("requestDTO", requestDTO);
         
-        // 3. Lấy danh sách thiết bị (devices) để đổ vào dropdown
         model.addAttribute("devices", deviceService.findAllDevices());
         
         model.addAttribute("activePage", "requests");
@@ -112,17 +109,12 @@ public class MaintenanceController {
         return ResponseEntity.ok().build();
     }
     
-    /**
-     * UC05: Xử lý lưu phiếu báo hỏng gửi từ Form
-     */
     @PostMapping("/requests/save")
     @ResponseBody
     public ResponseEntity<?> saveRequest(@RequestBody MaintenanceRequestsDTO dto, Authentication authentication) {
         try {
-            // 1. Lấy Username của người đang đăng nhập từ hệ thống
             String currentUsername = authentication.getName();
-            
-            // 2. Truyền Username vào Service để xử lý tìm User ID bên trong đó
+
             maintenanceService.saveRequestWithUsername(dto, currentUsername);
             
             return ResponseEntity.ok().build();
@@ -266,4 +258,24 @@ public class MaintenanceController {
         return "history"; 
     }
     
+    
+    @PostMapping("/approve-history/{historyId}")
+    @ResponseBody
+    public ResponseEntity<String> approveMaintenanceHistory(
+            @PathVariable Long historyId,
+            Authentication auth) {
+        
+        try {
+            // Lấy username của người đang đăng nhập (Kế toán/Quản lý)
+            String currentUsername = auth.getName();
+            
+            // Gọi hàm Service mới mà mình vừa thống nhất
+            maintenanceService.approveMaintenanceHistory(historyId, currentUsername);
+            
+            return ResponseEntity.ok("Nghiệm thu chi phí thành công! Thiết bị đã sẵn sàng hoạt động.");
+        } catch (Exception e) {
+            // Trả về lỗi cụ thể (ví dụ: chưa có ảnh bằng chứng)
+            return ResponseEntity.badRequest().body("Lỗi nghiệm thu: " + e.getMessage());
+        }
+    }
 }
