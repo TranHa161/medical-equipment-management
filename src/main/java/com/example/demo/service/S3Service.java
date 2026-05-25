@@ -27,18 +27,17 @@ public class S3Service {
         s3Client.putObject(PutObjectRequest.builder()
                 .bucket(bucketName)
                 .key(fileName)
-                .acl(ObjectCannedACL.PUBLIC_READ) // Để giảng viên có thể xem ảnh qua link
+                .acl(ObjectCannedACL.PUBLIC_READ)
                 .contentType(file.getContentType())
                 .build(), 
                 RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
 
-        // Trả về URL của ảnh trên AWS S3
         return String.format("https://%s.s3.ap-southeast-1.amazonaws.com/%s", bucketName, fileName);
     }
     
     public void deleteFile(String fileUrl) {
         if (fileUrl == null || fileUrl.isEmpty() || !fileUrl.contains(".amazonaws.com/")) {
-            return; // Nếu là ảnh mặc định hoặc link ngoài thì không xóa
+            return;
         }
 
         try {

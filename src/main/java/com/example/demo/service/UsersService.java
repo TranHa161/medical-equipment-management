@@ -46,7 +46,6 @@ public class UsersService {
 
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
-    // ===================== LOGIN =====================
     public Users login(String username, String rawPassword) {
         Users user = usersRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Tên đăng nhập không tồn tại!"));
@@ -58,7 +57,6 @@ public class UsersService {
         return user;
     }
 
-    // ===================== CREATE (by Registration) =====================
     public Users createUser(Users newUser, Integer roleId) {
         if (usersRepository.existsByUsername(newUser.getUsername())) {
             throw new RuntimeException("Tên đăng nhập đã tồn tại!");
@@ -73,7 +71,6 @@ public class UsersService {
         return usersRepository.save(newUser);
     }
 
-    // ===================== CHANGE PASSWORD =====================
     public void changePassword(String username, String oldPassword, String newPassword) {
         Users user = usersRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -86,8 +83,6 @@ public class UsersService {
         usersRepository.save(user);
     }
 
-
-    // ===================== DTO Mapping =====================
     private UsersResponseDTO toResponseDTO(Users user) {
         UsersResponseDTO dto = new UsersResponseDTO();
         dto.setId(user.getId());
@@ -95,15 +90,13 @@ public class UsersService {
         dto.setFullName(user.getFullName());
         dto.setEmail(user.getEmail());
         dto.setPhone(user.getPhone());
-        dto.setRoleName(user.getRole().getRoleName()); // ADMIN / TECHNICIAN
-        // Trong hàm convert sang UsersResponseDTO
+        dto.setRoleName(user.getRole().getRoleName());
         dto.setRoleId(user.getRole() != null ? user.getRole().getId() : null);
         dto.setIsActive(user.getIsActive());
         dto.setProfilePicture(user.getProfilePicture());
         return dto;
     }
 
-    // ===================== FIND ALL =====================
     public List<UsersResponseDTO> findAllUsers() {
         return usersRepository.findAll()
                 .stream()
@@ -112,7 +105,6 @@ public class UsersService {
     }
     
     public List<UsersResponseDTO> findAllTechnicians() {
-        // Lọc danh sách người dùng có RoleName là 'TECHNICIAN'
         List<Users> technicians = usersRepository.findByRole_RoleName("TECHNICIAN");
 
         return technicians.stream()
@@ -126,7 +118,6 @@ public class UsersService {
                 .collect(Collectors.toList());
     }
 
-    // ===================== FIND BY ID =====================
     public UsersResponseDTO getUserById(Long id) {
         Users user = usersRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng!"));
@@ -139,17 +130,15 @@ public class UsersService {
     
     public Long getUserIdByUsername(String username) {
         return usersRepository.findByUsername(username)
-                .map(Users::getId) // Nếu tìm thấy, lấy ID
+                .map(Users::getId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng với tên đăng nhập: " + username));
     }
 
-    // ===================== CREATE + UPDATE  =====================
     @Transactional
     public UsersResponseDTO saveUser(UserSaveRequest dto) {
 
         boolean isCreate = (dto.getId() == null);
 
-        // Check trùng username khi create
         if (isCreate && usersRepository.existsByUsername(dto.getUsername())) {
             throw new RuntimeException("Username đã tồn tại!");
         }
@@ -170,12 +159,10 @@ public class UsersService {
             entity = usersRepository.findById(dto.getId())
                     .orElseThrow(() -> new RuntimeException("User không tồn tại!"));
 
-            // Nếu có nhập password mới thì đổi
             if (dto.getPassword() != null && !dto.getPassword().isBlank()) {
                 entity.setPassword(passwordEncoder.encode(dto.getPassword()));
             }
 
-            // Nếu update username thì check trùng với người khác
             Optional<Users> checkUser = usersRepository.findByUsername(dto.getUsername());
             if (checkUser.isPresent() && !checkUser.get().getId().equals(dto.getId())) {
                 throw new RuntimeException("Username đã tồn tại!");
@@ -188,7 +175,6 @@ public class UsersService {
         entity.setPhone(dto.getPhone());
         entity.setIsActive(dto.getIsActive());
 
-        // Set role theo roleId
         Roles role = rolesRepository.findById(dto.getRoleId())
                 .orElseThrow(() -> new RuntimeException("Role không hợp lệ!"));
         entity.setRole(role);
@@ -224,7 +210,6 @@ public class UsersService {
                 
                 user.setProfilePicture(newImageUrl);
 
-                // Chỉ xóa ảnh cũ nếu nó tồn tại và không phải ảnh mặc định
                 if (oldImageUrl != null && !oldImageUrl.contains("logo.png")) {
                     s3Service.deleteFile(oldImageUrl); 
                 }
@@ -241,18 +226,14 @@ public class UsersService {
     }
     
     public void sendTemporaryPassword(String email) {
-        // 1. Kiểm tra email có tồn tại không
         Users user = usersRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Email không tồn tại trong hệ thống!"));
 
-        // 2. Tạo mật khẩu tạm thời
         String tempPass = "Hust@" + (int)(Math.random() * 900000 + 100000);
 
-        // 3. Cập nhật vào Database 
         user.setPassword(passwordEncoder.encode(tempPass));
         usersRepository.save(user);
 
-        // 4. Gửi Mail
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(email);
         message.setSubject("HUST MEDICAL - Khôi phục mật khẩu");
@@ -267,17 +248,14 @@ public class UsersService {
         Users user = usersRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Tên đăng nhập không tồn tại!"));
 
-        // 1. Tạo Token ngẫu nhiên
         String token = UUID.randomUUID().toString();
         
-        // 2. Lưu token với thời hạn 15 phút
         PasswordResetToken myToken = new PasswordResetToken();
         myToken.setToken(token);
         myToken.setUser(user);
         myToken.setExpiryDate(LocalDateTime.now().plusMinutes(15));
         tokenRepository.save(myToken);
 
-        // 3. Gửi Email với Link
         String resetUrl = host + "/reset-password?token=" + token;
         sendResetEmail(user.getEmail(), user.getFullName(), resetUrl);
     }
@@ -322,19 +300,15 @@ public class UsersService {
     
     @Transactional
     public void updatePasswordAndDeleteToken(String token, String newPassword) {
-        // 1. Tìm và kiểm tra lại Token một lần nữa cho chắc chắn
         PasswordResetToken resetToken = tokenRepository.findByToken(token)
                 .filter(t -> !t.isExpired())
                 .orElseThrow(() -> new RuntimeException("Link khôi phục đã hết hạn hoặc không hợp lệ!"));
 
-        // 2. Lấy User gắn liền với Token đó
         Users user = resetToken.getUser();
 
-        // 3. Mã hóa mật khẩu mới bằng BCrypt và cập nhật
         user.setPassword(passwordEncoder.encode(newPassword));
         usersRepository.save(user);
 
-        // 4. Xóa Token ngay sau khi sử dụng
         tokenRepository.delete(resetToken);
     }
 

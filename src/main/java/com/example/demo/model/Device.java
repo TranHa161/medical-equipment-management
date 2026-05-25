@@ -53,8 +53,8 @@ public class Device {
     private Company company;
 	
 	@Column(name = "ImageUrl", length = 255)
-	private String imageUrl; // Lưu đường dẫn file hoặc URL ảnh thiết bị
+	private String imageUrl;
 
 	@Column(name = "Notes", columnDefinition = "TEXT")
-	private String notes; // Ghi chú riêng cho từng máy cụ thể
+	private String notes;
 }

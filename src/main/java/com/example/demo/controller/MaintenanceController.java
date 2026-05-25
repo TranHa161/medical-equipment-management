@@ -44,9 +44,6 @@ public class MaintenanceController {
         this.usersService = usersService;
     }
 
-    /**
-     * UC05: Danh sách phiếu báo hỏng (Phân quyền Admin/User)
-     */
     @GetMapping("/requests")
     public String listRequests(
             @RequestParam(required = false) String keyword,
@@ -60,17 +57,14 @@ public class MaintenanceController {
         boolean isAdmin = auth.getAuthorities().stream()
                               .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
 
-        // Nếu Admin đang tìm kiếm, hãy trim() chuỗi trước khi gửi xuống Service
+        
         String searchUser = (requester != null) ? requester.trim() : null;
         String filterUser = isAdmin ? searchUser : currentUsername;
 
-
-        // Gọi Service lọc dữ liệu
         List<MaintenanceRequestsResponseDTO> requests = maintenanceService.filterRequests(keyword, filterUser, severity, status, date);
 
         model.addAttribute("requestList", requests);
         
-        // Giữ lại giá trị trên form
         model.addAttribute("keyword", keyword);
         model.addAttribute("requester", requester);
         model.addAttribute("date", date);
@@ -124,7 +118,7 @@ public class MaintenanceController {
     }
     
     @PostMapping("/requests/reject/{id}")
-    @ResponseBody // Trả về JSON để JavaScript xử lý
+    @ResponseBody
     public ResponseEntity<?> rejectRequest(@PathVariable Long id, @RequestBody Map<String, String> payload) {
         try {
             String reason = payload.get("reason");
@@ -138,10 +132,6 @@ public class MaintenanceController {
         }
     }
 
-
-    /**
-     * UC06: Xem lịch bảo trì active của thiết bị
-     */
     @GetMapping("/schedules")
     public String listSchedules(
             @RequestParam(required = false) String keyword,
@@ -151,7 +141,6 @@ public class MaintenanceController {
             @RequestParam(required = false) Boolean active,
             Model model) {
 
-        // Parse ngày bắt đầu
         java.time.LocalDate start = (startDate != null && !startDate.isEmpty()) 
                                         ? java.time.LocalDate.parse(startDate) : null;
 
@@ -160,7 +149,6 @@ public class MaintenanceController {
 
         model.addAttribute("scheduleList", scheduleList);
         
-        // Đẩy lại model để giữ value trên các ô input
         model.addAttribute("keyword", keyword);
         model.addAttribute("type", type != null ? type.name() : "");
         model.addAttribute("cycle", cycle);
@@ -169,50 +157,38 @@ public class MaintenanceController {
 
         return "schedules";
     }
-    /**
-     * UC07: Thiết lập lịch bảo trì định kỳ
-     */
+
     @GetMapping("/schedules/{deviceId}")
     public String showSetupScheduleForm(@PathVariable Integer deviceId, Model model) {
-        // 1. Lấy thông tin thiết bị để hiển thị tiêu đề Form
         DeviceDTO device = deviceService.getDeviceById(deviceId);
         model.addAttribute("device", device);
         
-        // 2. Kiểm tra xem thiết bị đã có lịch chưa, nếu chưa thì tạo mới DTO
         MaintenanceScheduleResponseDTO schedule = maintenanceService.getScheduleByDeviceId(deviceId)
                 .orElse(new MaintenanceScheduleResponseDTO());
         
-        // Đảm bảo gán deviceId vào DTO để khi lưu hệ thống biết là của máy nào
         schedule.setDeviceId(deviceId); 
         model.addAttribute("schedule", schedule);
         
-        // 3. Lấy danh sách Kỹ thuật viên (Technicians) để hiện lên Dropdown phân công
         List<UsersResponseDTO> technicians = usersService.findAllTechnicians();
         model.addAttribute("technicians", technicians);
         
-        // 4. Truyền thêm biến activePage để Sidebar tô màu đúng mục
         model.addAttribute("activePage", "schedules");
         
-        return "schedule-form"; // Trả về file templates/admin/schedule-form.html
+        return "schedule-form";
     }
     
     @GetMapping("/schedules/add")
     public String showAddScheduleForm(Model model) {
-        // 1. Tạo một DTO rỗng để bind vào form
         MaintenanceScheduleResponseDTO schedule = new MaintenanceScheduleResponseDTO();
-        schedule.setIsActive(true); // Mặc định là kích hoạt
+        schedule.setIsActive(true);
         model.addAttribute("schedule", schedule);
-        
-        // 2. Lấy danh sách thiết bị để người dùng chọn máy cần lập lịch
-        // Bạn nên ưu tiên lấy những máy chưa có lịch bảo trì
+
         List<DeviceDTO> devices = deviceService.findAllDevices(); 
         model.addAttribute("devices", devices);
         
-        // 3. Lấy danh sách Kỹ thuật viên để phân công mặc định (nếu cần)
         List<UsersResponseDTO> technicians = usersService.findAllTechnicians();
         model.addAttribute("technicians", technicians);
         
-        // 4. Đánh dấu mục active trên Sidebar
         model.addAttribute("activePage", "schedules");
         
         return "schedule-form";
@@ -223,11 +199,9 @@ public class MaintenanceController {
     @ResponseBody
     public ResponseEntity<?> saveSchedule(@RequestBody MaintenanceScheduleResponseDTO dto) {
         try {
-            // Gọi Service để xử lý lưu dữ liệu
             MaintenanceScheduleResponseDTO savedDto = maintenanceService.saveSchedule(dto);
             return ResponseEntity.ok(savedDto);
         } catch (Exception e) {
-            // Trả về lỗi 400 kèm message để hiện lên UI
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
@@ -240,14 +214,11 @@ public class MaintenanceController {
             @RequestParam(required = false) String endDate,
             Model model) {
 
-        // 1. Gọi Service với đầy đủ 4 tham số lọc
         List<MaintenanceHistoryResponseDTO> historyList = 
                 maintenanceService.getAllHistory(keyword, techName, startDate, endDate);
 
-        // 2. Nạp dữ liệu vào Model để hiển thị lên bảng
         model.addAttribute("historyList", historyList);
 
-        // 3. QUAN TRỌNG: Gửi lại các tham số tìm kiếm để giữ giá trị trên Form
         model.addAttribute("keyword", keyword);
         model.addAttribute("techName", techName);
         model.addAttribute("startDate", startDate);
@@ -258,24 +229,32 @@ public class MaintenanceController {
         return "history"; 
     }
     
-    
-    @PostMapping("/approve-history/{historyId}")
+    @PostMapping("/history/accountant-approve/{historyId}")
     @ResponseBody
-    public ResponseEntity<String> approveMaintenanceHistory(
+    public ResponseEntity<String> accountantApproveHistory(
             @PathVariable Long historyId,
             Authentication auth) {
         
         try {
-            // Lấy username của người đang đăng nhập (Kế toán/Quản lý)
             String currentUsername = auth.getName();
+
+            maintenanceService.accountantApproveAndInvoiced(historyId, currentUsername);
             
-            // Gọi hàm Service mới mà mình vừa thống nhất
-            maintenanceService.approveMaintenanceHistory(historyId, currentUsername);
-            
-            return ResponseEntity.ok("Nghiệm thu chi phí thành công! Thiết bị đã sẵn sàng hoạt động.");
+            return ResponseEntity.ok("Kế toán đã duyệt thành công! Phiếu đã được đưa vào danh sách chờ quyết toán.");
         } catch (Exception e) {
-            // Trả về lỗi cụ thể (ví dụ: chưa có ảnh bằng chứng)
-            return ResponseEntity.badRequest().body("Lỗi nghiệm thu: " + e.getMessage());
+            return ResponseEntity.badRequest().body("Lỗi duyệt hóa đơn: " + e.getMessage());
+        }
+    }
+
+    @PostMapping("/history/user-accept/{historyId}")
+    @ResponseBody
+    public ResponseEntity<String> userAcceptMaintenance(
+            @PathVariable Long historyId) {
+        try {
+            maintenanceService.userAccept(historyId);
+            return ResponseEntity.ok("Xác nhận nghiệm thu thiết bị thành công! Đang chờ kế toán duyệt chi phí.");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Lỗi: " + e.getMessage());
         }
     }
 }

@@ -32,7 +32,7 @@ public class MaintenanceSchedule {
     private Device device;
     
     @Enumerated(EnumType.STRING)
-    @Column(name = "ScheduleType", length = 20) // DAILY, WEEKLY, MONTHLY
+    @Column(name = "ScheduleType", length = 20)
     private ScheduleType scheduleType;
 
     @Column(name = "CycleValue")

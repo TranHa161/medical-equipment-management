@@ -30,8 +30,6 @@ public class DeviceController {
     @Autowired private DeviceTypeRepository typeRepository;
     @Autowired private DeviceRepository deviceRepository;
 
-    // --- CÁC ENDPOINT HIỂN THỊ GIAO DIỆN (GET) ---
-
     @GetMapping
     public String listDevices(Model model, 
                               @RequestParam(required = false) String keyword,
@@ -55,44 +53,37 @@ public class DeviceController {
     public String showEditForm(@PathVariable Integer id, Model model) {
         Device entity = deviceRepository.findById(id).orElseThrow();
         
-        // Tạo DTO "phẳng" từ Entity
         DeviceDTO dto = new DeviceDTO();
         dto.setId(entity.getId());
         dto.setSerialNumber(entity.getSerialNumber());
         dto.setLocation(entity.getLocation());
         dto.setNotes(entity.getNotes());
         dto.setStatus(entity.getStatus().name());
-        dto.setImageUrl(entity.getImageUrl()); // Để hiện ảnh cũ
+        dto.setImageUrl(entity.getImageUrl());
 
         if (entity.getDeviceType() != null) {
             dto.setTypeId(entity.getDeviceType().getId());
-            // Lấy link PDF từ Entity DeviceType bỏ vào trường manualUrl của DTO
             dto.setManualUrl(entity.getDeviceType().getManualUrl()); 
         }
 
-        model.addAttribute("device", dto); // Truyền DTO ra ngoài
+        model.addAttribute("device", dto);
         model.addAttribute("deviceTypes", typeRepository.findAll());
         return "device-form";
     }
 
     @GetMapping("/detail/{id}")
     public String showDetail(@PathVariable Integer id, Model model) {
-        // Lấy DTO đầy đủ thông tin nhất (bao gồm cả Manufacturer, Model, ManualUrl...)
         DeviceDetailResponseDTO deviceDetail = deviceService.getDeviceDetail(id);
         model.addAttribute("device", deviceDetail);
         return "device-detail";
     }
 
-    // --- CÁC ENDPOINT XỬ LÝ DỮ LIỆU (POST) ---
-
-    // 1. Thêm mới thiết bị (Hỗ trợ Ảnh + Tài liệu hướng dẫn)
     @PostMapping("/add")
     public ResponseEntity<?> createDevice(
             @ModelAttribute DeviceDTO dto, 
             @RequestParam(value = "imageFile", required = false) MultipartFile imageFile,
             @RequestParam(value = "manualFile", required = false) MultipartFile manualFile) { 
         try {
-            // Service trả về DetailDTO để Frontend có thể hiển thị thông báo tóm tắt
             DeviceDetailResponseDTO created = deviceService.createDevice(dto, imageFile, manualFile);
             return ResponseEntity.ok(created);
         } catch (Exception e) {
@@ -100,7 +91,6 @@ public class DeviceController {
         }
     }
 
-    // 2. Cập nhật thiết bị (Phân quyền + Hỗ trợ Ảnh & Tài liệu)
     @PostMapping("/edit/{id}")
     public ResponseEntity<?> update(
             @PathVariable Integer id, 
@@ -109,7 +99,6 @@ public class DeviceController {
             @RequestParam(value = "manualFile", required = false) MultipartFile manualFile, 
             Authentication auth) { 
         try {
-            // Truyền ID và Auth để check quyền sở hữu/phân công
             DeviceDetailResponseDTO updated = deviceService.updateDevice(id, dto, imageFile, manualFile, auth);
             return ResponseEntity.ok(updated);
         } catch (Exception e) {

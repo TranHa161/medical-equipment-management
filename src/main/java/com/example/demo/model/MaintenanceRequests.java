@@ -43,11 +43,11 @@ public class MaintenanceRequests {
     private String description;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "Severity", length = 20) // LOW, MEDIUM, HIGH, URGENT
+    @Column(name = "Severity", length = 20)
     private SeverityLevel severity;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "Status", length = 20) // NEW, PROCESSING, COMPLETED, CANCELLED
+    @Column(name = "Status", length = 20)
     private RequestStatus status;
 
     @Column(name = "CreatedAt")
@@ -55,20 +55,16 @@ public class MaintenanceRequests {
     
     @Column(name = "RejectionReason")
     private String rejectionReason;
-	// Hàm tự động chạy trước khi dữ liệu được lưu lần đầu vào DB
     @PrePersist
     protected void onCreate() {
-        // 1. Mặc định trạng thái là OPEN
         if (this.status == null) {
             this.status = RequestStatus.NEW;
         }
 
-        // 2. Mặc định mức độ là LOW (nếu người dùng không chọn)
         if (this.severity == null) {
             this.severity = SeverityLevel.LOW;
         }
 
-        // 3. Tự động lấy thời gian hiện tại của hệ thống
         if (this.createdAt == null) {
             this.createdAt = java.time.LocalDateTime.now();
         }

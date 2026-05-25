@@ -25,7 +25,6 @@ public class UsersController {
     @Autowired
     private UsersService usersService;
 
- // 1. HIỂN THỊ DANH SÁCH USER
     @GetMapping
     public String listUsers(Model model, 
                             @RequestParam(required = false) String keyword) {
@@ -40,7 +39,6 @@ public class UsersController {
         return "users"; 
     }
 
-    // 2. HIỂN THỊ FORM EDIT
     @GetMapping("/edit/{id}")
     public String showEditForm(@PathVariable Long id, Model model) {
         UsersResponseDTO user = usersService.getUserById(id);
@@ -50,7 +48,6 @@ public class UsersController {
         return "users-form"; 
     }
 
-    // 3. SHOW FORM ADD
     @GetMapping("/add")
     public String showAddForm(Model model) {
         UserSaveRequest user = new UserSaveRequest();

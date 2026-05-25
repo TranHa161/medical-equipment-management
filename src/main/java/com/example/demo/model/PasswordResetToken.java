@@ -2,8 +2,6 @@ package com.example.demo.model;
 
 import java.time.LocalDateTime;
 
-import com.example.demo.enums.DeviceStatus;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;

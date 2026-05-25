@@ -2,6 +2,7 @@ package com.example.demo.service;
 
 import java.util.List;
 
+
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -15,19 +16,14 @@ import jakarta.mail.internet.MimeMessage;
 @Service
 public class NotificationService {
 
-	// Sử dụng 'final' để đảm bảo tính bất biến (Immutability)
     private final JavaMailSender mailSender;
     private final UsersRepository usersRepository;
 
-    // Constructor Injection: Spring Boot sẽ tự động nạp cả 2 bean này vào
     public NotificationService(JavaMailSender mailSender, UsersRepository usersRepository) {
         this.mailSender = mailSender;
         this.usersRepository = usersRepository;
     }
 
-    /**
-     * Hàm gửi email cơ bản (Dạng văn bản thuần túy)
-     */
     public void sendSimpleEmail(String toEmail, String subject, String body) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom("noreply@hospital-system.com"); // Email người gửi
@@ -38,9 +34,6 @@ public class NotificationService {
         mailSender.send(message);
     }
 
-    /**
-     * Thông báo cho kỹ thuật viên về trạng thái Phiếu công việc (Cấp mới / Hủy)
-     */
     public void sendWorkOrderNotification(String technicianEmail, String serialNumber, String description, boolean isCancellation) {
         try {
             MimeMessage message = mailSender.createMimeMessage();
@@ -81,10 +74,6 @@ public class NotificationService {
         }
     }
 
-    
-    /**
-     * Gửi báo cáo tổng hợp cho Admin sau khi chạy Scheduled Task
-     */
     public void sendAdminAutoSummaryReport(int count) {
         List<String> adminEmails = usersRepository.findByRole_RoleName("ADMIN")
                                     .stream()
@@ -176,6 +165,47 @@ public class NotificationService {
             } catch (Exception e) {
                 System.err.println("Lỗi gửi thông báo nghiệm thu: " + e.getMessage());
             }
+        }
+    }
+
+    public void notifyUserForAcceptance(Long workOrderId, String deviceName, String technicianName, String recipientEmail) {
+        if (recipientEmail == null || recipientEmail.isEmpty()) {
+            System.out.println("Không tìm thấy email người dùng để gửi yêu cầu nghiệm thu!");
+            return;
+        }
+
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setTo(recipientEmail);
+            helper.setSubject("[HUST MEDICAL] XÁC NHẬN NGHIỆM THU THIẾT BỊ - Phiếu #" + workOrderId);
+
+            String htmlContent = 
+                "<div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 10px; overflow: hidden;'>" +
+                    "<div style='background: linear-gradient(to right, #11cdef, #1171ef); padding: 20px; text-align: center;'>" +
+                        "<h2 style='color: white; margin: 0;'>XÁC NHẬN NGHIỆM THU</h2>" +
+                    "</div>" +
+                    "<div style='padding: 30px; color: #444; line-height: 1.6;'>" +
+                        "<p>Kính chào quý người dùng,</p>" +
+                        "<p>Thiết bị <strong>" + deviceName + "</strong> của bạn đã được kỹ thuật viên <strong>" + technicianName + "</strong> bảo trì xong.</p>" +
+                        "<div style='background-color: #e8f7ff; border-left: 4px solid #11cdef; padding: 15px; margin: 20px 0;'>" +
+                            "Vui lòng truy cập hệ thống để <strong>xem ảnh kết quả bảo trì</strong> và nhấn xác nhận nghiệm thu nếu thiết bị đã hoạt động bình thường." +
+                        "</div>" +
+                        "<div style='text-align: center; margin: 30px 0;'>" +
+                            "<a href='http://localhost:8080/requests' style='background-color: #11cdef; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;'>XEM KẾT QUẢ & NGHIỆM THU</a>" +
+                        "</div>" +
+                        "<p style='font-size: 12px; color: #888;'>Lưu ý: Sau khi bạn nghiệm thu, thông tin sẽ được chuyển đến bộ phận kế toán để quyết toán chi phí.</p>" +
+                    "</div>"+
+                "</div>";
+
+            helper.setText(htmlContent, true);
+            mailSender.send(message);
+            
+            System.out.println("Đã gửi thông báo nghiệm thu cho người dùng: " + recipientEmail);
+            
+        } catch (Exception e) {
+            System.err.println("Lỗi gửi email nghiệm thu cho người dùng: " + e.getMessage());
         }
     }
 }

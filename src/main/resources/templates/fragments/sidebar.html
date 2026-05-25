@@ -36,8 +36,8 @@
 	  </li>
 
 	  <li class="nav-item mt-3"><h6 class="ps-4 ms-2 text-uppercase text-xs text-dark font-weight-bolder opacity-5">Vận hành</h6></li>
-	  
-	  <li class="nav-item" sec:authorize="!hasRole('TECHNICIAN')">
+
+	  <li class="nav-item" sec:authorize="!hasAnyRole('TECHNICIAN', 'ACCOUNTANT')">
 	    <a class="nav-link" th:classappend="${activePage == 'schedules' ? 'active bg-gradient-info text-white' : 'text-dark'}" 
 	       th:href="@{/schedules}">
 	      <i class="material-symbols-rounded opacity-5">event_repeat</i>
@@ -45,7 +45,7 @@
 	    </a>
 	  </li>
 
-	  <li class="nav-item" sec:authorize="!hasRole('TECHNICIAN')">
+	  <li class="nav-item" sec:authorize="!hasAnyRole('TECHNICIAN', 'ACCOUNTANT')">
 	    <a class="nav-link" th:classappend="${activePage == 'requests' ? 'active bg-gradient-info text-white' : 'text-dark'}" 
 	       th:href="@{/requests}">
 	      <i class="material-symbols-rounded opacity-5">report_gmailerrorred</i>
@@ -61,13 +61,23 @@
 	    </a>
 	  </li>
 	  
-	  <li class="nav-item mt-3" sec:authorize="hasRole('ADMIN')"><h6 class="ps-4 ms-2 text-uppercase text-xs text-dark font-weight-bolder opacity-5">Dữ liệu</h6></li>
-	  <li class="nav-item" sec:authorize="hasRole('ADMIN')">
+	  <li class="nav-item mt-3" sec:authorize="hasAnyRole('ADMIN', 'ACCOUNTANT', 'ENDUSER')"><h6 class="ps-4 ms-2 text-uppercase text-xs text-dark font-weight-bolder opacity-5">Dữ liệu</h6></li>
+	  <li class="nav-item" sec:authorize="hasAnyRole('ADMIN', 'ACCOUNTANT', 'ENDUSER')">
 	    <a class="nav-link" th:classappend="${activePage == 'history' ? 'active bg-gradient-info text-white' : 'text-dark'}" 
 	       th:href="@{/history}"> <i class="material-symbols-rounded opacity-5">history</i>
 	      <span class="nav-link-text ms-1">Lịch sử bảo trì</span>
 	    </a>
 	  </li>
+
+	  <li class="nav-item mt-3"><h6 class="ps-4 ms-2 text-uppercase text-xs text-dark font-weight-bolder opacity-5" sec:authorize="hasRole('ACCOUNTANT')">Tài chính</h6></li>
+
+	<li class="nav-item" sec:authorize="hasRole('ACCOUNTANT')">
+		<a class="nav-link" th:classappend="${activePage == 'payment' ? 'active bg-gradient-info text-white' : 'text-dark'}" 
+		th:href="@{/payment}">
+			<i class="material-symbols-rounded opacity-5">payments</i>
+			<span class="nav-link-text ms-1">Hóa đơn</span>
+		</a>
+	</li>
 	  
 	  <li class="nav-item mt-3"><h6 class="ps-4 ms-2 text-uppercase text-xs text-dark font-weight-bolder opacity-5">Cá nhân</h6></li>
 	  <li class="nav-item">

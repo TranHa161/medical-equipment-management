@@ -15,21 +15,19 @@ public class SecurityConfig {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        // Sử dụng BCrypt để mã hóa mật khẩu như bạn mong muốn
         return new BCryptPasswordEncoder();
     }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            // 1. Tắt CSRF để Postman có thể gửi lệnh POST/PUT/DELETE mà không bị chặn
             .csrf(csrf -> csrf.disable())
             
             .authorizeHttpRequests(auth -> auth
             	    .requestMatchers("/login", "/redirect","/forgot-password", "/reset-password", "/assets/**", "/css/**", "/js/**", "/uploads/**").permitAll()
             	    .requestMatchers("/dashboard").hasRole("ADMIN")
             	    .requestMatchers("/schedules", "/schedules/**", "/requests", "/requests/**").hasAnyRole("ADMIN", "ENDUSER")
-            	    .requestMatchers("/work-orders/**").hasAnyRole("ADMIN", "TECHNICIAN")
+            	    .requestMatchers("/work-orders/**").hasAnyRole("ADMIN", "TECHNICIAN","ACCOUNTANT")
             	    .requestMatchers("/profile/**").authenticated()
             	    .anyRequest().authenticated()
             	)

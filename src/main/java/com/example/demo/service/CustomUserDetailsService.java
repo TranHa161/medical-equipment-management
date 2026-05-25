@@ -15,16 +15,13 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        // 1. Tìm user từ database
         Users user = userRepository.findByUsername(username)
             .orElseThrow(() -> new UsernameNotFoundException("Không tìm thấy người dùng: " + username));
         
-        // 2. Trả về đối tượng UserDetails tích hợp sẵn trạng thái isActive
         return org.springframework.security.core.userdetails.User.builder()
             .username(user.getUsername())
             .password(user.getPassword())
             .roles(user.getRole().getRoleName()) 
-            // .disabled(true) nếu isActive = false, ngược lại enabled = true
             .disabled(!user.getIsActive()) 
             .accountExpired(false)
             .credentialsExpired(false)

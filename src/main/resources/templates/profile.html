@@ -53,6 +53,7 @@ xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
                 <p class="mb-0 font-weight-bold text-sm text-info">
                   <i class="material-symbols-rounded text-xs me-1">verified_user</i>
                   <span th:text="${user.role.roleName == 'ADMIN' ? 'QUẢN LÝ' : 
+                                  user.role.roleName == 'ACCOUNTANT' ? 'KẾ TOÁN' :
                                   (user.role.roleName == 'TECHNICIAN' ? 'KỸ THUẬT VIÊN' : 'NGƯỜI DÙNG CUỐI')}">ROLE</span>
                 </p>
               </div>

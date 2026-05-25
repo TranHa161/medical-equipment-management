@@ -3,7 +3,6 @@ package com.example.demo.dto;
 import java.time.LocalDate;
 
 import com.example.demo.enums.ScheduleType;
-import com.example.demo.model.Roles;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -21,7 +20,7 @@ public class MaintenanceScheduleResponseDTO {
     private Long id;
 
     private Integer deviceId;
-    private String deviceName; // ví dụ: MRI Scanner - MRI-001
+    private String deviceName;
 
     private ScheduleType scheduleType;
     private Integer cycleValue;

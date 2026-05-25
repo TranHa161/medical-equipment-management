@@ -1,8 +1,6 @@
 package com.example.demo.repository;
 
-import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -35,12 +33,14 @@ public interface MaintenanceHistoryRepository extends JpaRepository<MaintenanceH
     	    @Param("startDate") java.time.LocalDateTime startDate,
     	    @Param("endDate") java.time.LocalDateTime endDate);
     
-    @Query("SELECT mh FROM MaintenanceHistory mh " +
-    	       "JOIN mh.workOrder wo " +
-    	       "WHERE wo.device.company.id = :companyId " +
-    	       "AND mh.status = 'APPROVED' " +
-    	       "AND mh.bulkInvoice IS NULL")
-     List<MaintenanceHistory> findPendingHistoryByCompany(@Param("companyId") Integer companyId);
+    @Query("SELECT h FROM MaintenanceHistory h WHERE h.status = 'ACCOUNTANT_APPROVED' AND h.companyId.id = :companyId")
+    List<MaintenanceHistory> findApprovedByCompany(Integer companyId);
 
 	List<MaintenanceHistory> findByBulkInvoice(BulkInvoice invoice);
+
+	@Query("SELECT m FROM MaintenanceHistory m " +
+           "WHERE m.userAcceptedAt IS NOT NULL " +
+           "AND m.accountantApprovedAt IS NOT NULL " +
+           "AND m.bulkInvoice IS NULL")
+    List<MaintenanceHistory> findPendingForInvoicing();
 }

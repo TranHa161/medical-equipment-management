@@ -44,7 +44,6 @@ public class ProfileController {
         try {
             String username = principal.getName();
             
-            // Log để debug (Trân Trân nhìn trong console IntelliJ nhé)
             if (file != null && !file.isEmpty()) {
                 System.out.println("Nhận được file: " + file.getOriginalFilename());
             } else {

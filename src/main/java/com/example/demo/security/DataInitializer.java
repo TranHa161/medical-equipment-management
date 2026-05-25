@@ -29,7 +29,6 @@ public class DataInitializer implements CommandLineRunner {
     public void run(String... args) {
         System.out.println(">>> DataInitializer RUNNING <<<");
 
-        // 1. Tạo role ADMIN nếu chưa có
         Roles adminRole;
         if (!rolesRepository.existsByRoleName("ADMIN")) {
             adminRole = new Roles();
@@ -44,7 +43,6 @@ public class DataInitializer implements CommandLineRunner {
                     .orElseThrow();
         }
 
-        // 2. Tạo user admin nếu chưa có
         if (usersRepository.findByUsername("admin").isEmpty()) {
             Users admin = new Users();
             admin.setUsername("admin");

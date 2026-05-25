@@ -40,11 +40,11 @@ public class WorkOrder {
     private MaintenanceSchedule schedule;
 
     @ManyToOne
-    @JoinColumn(name = "AssignedTo") // Kỹ thuật viên được giao việc
+    @JoinColumn(name = "AssignedTo")
     private Users technician;
     
     @Enumerated(EnumType.STRING)
-    @Column(name = "Status", length = 20) // PLANNED, IN_PROGRESS, COMPLETED
+    @Column(name = "Status", length = 20)
     private WorkOrderStatus status;
     
     @Column(name = "CreatedAt")

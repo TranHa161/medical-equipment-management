@@ -24,7 +24,7 @@ public class BulkInvoice {
     @Column(name = "total_amount", precision = 15, scale = 2)
     private BigDecimal totalAmount;
 
-    @Column(name = "status", length = 20) // PENDING, PAID, CANCELLED
+    @Column(name = "status", length = 20)
     private String status;
 
     @Column(columnDefinition = "TEXT")
@@ -33,7 +33,7 @@ public class BulkInvoice {
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
-    @OneToMany(mappedBy = "bulkInvoice") 
+    @OneToMany(mappedBy = "bulkInvoice", fetch = FetchType.EAGER) 
     private List<MaintenanceHistory> maintenanceHistories;
 
     @PrePersist

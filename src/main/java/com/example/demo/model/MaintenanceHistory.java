@@ -1,7 +1,11 @@
 package com.example.demo.model;
 
+import com.example.demo.enums.MaintenanceStatus;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -42,8 +46,9 @@ public class MaintenanceHistory {
     @Column(name = "Cost")
     private java.math.BigDecimal cost;
     
-    @Column(name = "Status")
-    private String status;
+    @Enumerated(EnumType.STRING)
+	@Column(name = "Status")
+	private MaintenanceStatus status;
     
     @ManyToOne
     @JoinColumn(name = "bulk_invoice_id")
@@ -56,6 +61,18 @@ public class MaintenanceHistory {
     @ManyToOne
     @JoinColumn(name = "company_id")
     private Company companyId;
+
+	@Column(name = "before_image_url", length = 500)
+    private String beforeImageUrl;
+
+    @Column(name = "after_image_url", length = 500)
+    private String afterImageUrl;
+
+    @Column(name = "user_accepted_at")
+    private java.time.LocalDateTime userAcceptedAt;
+
+    @Column(name = "accountant_approved_at")
+    private java.time.LocalDateTime accountantApprovedAt;
 
 	public Long getId() {
 		return id;
@@ -121,14 +138,6 @@ public class MaintenanceHistory {
 		this.bulkInvoice = bulkInvoice;
 	}
 
-	public String getStatus() {
-		return status;
-	}
-
-	public void setStatus(String status) {
-		this.status = status;
-	}
-
 	public Users getApprovedBy() {
 		return approvedBy;
 	}
@@ -143,5 +152,45 @@ public class MaintenanceHistory {
 
 	public void setCompanyId(Company companyId) {
 		this.companyId = companyId;
+	}
+
+	public String getBeforeImageUrl() {
+		return beforeImageUrl;
+	}
+
+	public void setBeforeImageUrl(String beforeImageUrl) {
+		this.beforeImageUrl = beforeImageUrl;
+	}
+
+	public String getAfterImageUrl() {
+		return afterImageUrl;
+	}
+
+	public void setAfterImageUrl(String afterImageUrl) {
+		this.afterImageUrl = afterImageUrl;
+	}
+
+	public java.time.LocalDateTime getUserAcceptedAt() {
+		return userAcceptedAt;
+	}
+
+	public void setUserAcceptedAt(java.time.LocalDateTime userAcceptedAt) {
+		this.userAcceptedAt = userAcceptedAt;
+	}
+
+	public java.time.LocalDateTime getAccountantApprovedAt() {
+		return accountantApprovedAt;
+	}
+
+	public void setAccountantApprovedAt(java.time.LocalDateTime accountantApprovedAt) {
+		this.accountantApprovedAt = accountantApprovedAt;
+	}
+
+	public MaintenanceStatus getStatus() {
+		return status;
+	}
+
+	public void setStatus(MaintenanceStatus status) {
+		this.status = status;
 	}
 }

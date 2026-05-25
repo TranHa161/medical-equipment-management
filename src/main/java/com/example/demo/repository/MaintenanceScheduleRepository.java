@@ -11,7 +11,6 @@ import com.example.demo.enums.ScheduleType;
 import com.example.demo.model.MaintenanceSchedule;
 
 public interface MaintenanceScheduleRepository extends JpaRepository<MaintenanceSchedule, Long> {
-	// Tìm lịch bảo trì đang hoạt động của một thiết bị (UC07 - 4a)
     Optional<MaintenanceSchedule> findByDevice_IdAndIsActiveTrue(Integer deviceId);
     List<MaintenanceSchedule> findByIsActiveTrue();
     List<MaintenanceSchedule> findByDevice_DeviceType_TypeNameContainingIgnoreCaseOrDevice_SerialNumberContainingIgnoreCase(String typeKeyword, String serialKeyword);

@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import com.example.demo.dto.TechnicianResponseDTO;
 import com.example.demo.enums.DeviceStatus;
+import com.example.demo.enums.MaintenanceStatus;
 import com.example.demo.enums.RequestStatus;
 import com.example.demo.enums.WorkOrderStatus;
 import com.example.demo.model.Device;
@@ -51,9 +52,6 @@ public class WorkOrderService {
         this.scheduleRepository = scheduleRepository;
     }
 
-    /**
-     * THUẬT TOÁN: Weighted Scoring - chọn kỹ thuật viên rảnh nhất
-     */
     public TechnicianResponseDTO findBestAvailableTechnician() {
         Users tech = findBestAvailableTechnicianEntity();
 
@@ -79,14 +77,11 @@ public class WorkOrderService {
                             default:     return 1;
                         }
                     }
-                    return 2; // bảo trì định kỳ
+                    return 2;
                 })
                 .sum();
     }
 
-    /**
-     * UC08: Admin duyệt và có thể chỉ định Kỹ thuật viên cụ thể
-     */
     public WorkOrder createWorkOrderFromRequest(Long requestId, Long manualTechId) {
         MaintenanceRequests request = requestRepository.findById(requestId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy phiếu!"));
@@ -110,7 +105,7 @@ public class WorkOrderService {
         requestRepository.save(request);
 
         WorkOrder savedOrder = workOrderRepository.save(order);
-        sendEmail(assignedTech, savedOrder); // Gửi mail cho người được chọn
+        sendEmail(assignedTech, savedOrder);
 
         return savedOrder;
     }
@@ -118,11 +113,11 @@ public class WorkOrderService {
 
     @Transactional
     public void completeWorkOrder(Long workOrderId,
-            String currentUserName,
-            String result,
-            java.math.BigDecimal cost,
-            String imgBefore, 
-            String imgAfter) 
+                                String currentUserName,
+                                String result,
+                                java.math.BigDecimal cost,
+                                String imgBefore, 
+                                String imgAfter) 
     {
         WorkOrder order = workOrderRepository.findById(workOrderId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy phiếu công việc!"));
@@ -148,8 +143,12 @@ public class WorkOrderService {
         history.setTechnician(order.getTechnician());
         history.setMaintenanceDate(java.time.LocalDateTime.now());
         history.setResult(result);
-        history.setCost(cost); 
-        history.setStatus("PENDING_APPROVAL"); 
+        history.setCost(cost);
+        
+        history.setBeforeImageUrl(imgBefore);
+        history.setAfterImageUrl(imgAfter);
+        
+        history.setStatus(MaintenanceStatus.PENDING_ACCEPTANCE); 
 
         if (order.getDevice() != null && order.getDevice().getCompany() != null) {
             history.setCompanyId(order.getDevice().getCompany()); 
@@ -157,10 +156,18 @@ public class WorkOrderService {
 
         historyRepository.save(history);
 
-        notificationService.notifyAccountantForApproval(
+        String recipientEmail;
+        if (order.getRequest() != null && order.getRequest().getRequester() != null) {
+            recipientEmail = order.getRequest().getRequester().getEmail();
+        } else {
+            recipientEmail = "tran559@gmail.com";
+        }
+
+        notificationService.notifyUserForAcceptance(
             order.getId(), 
             order.getDevice().getDeviceType().getTypeName(), 
-            order.getTechnician().getFullName()
+            order.getTechnician().getFullName(),
+            recipientEmail
         );
     }
 	
@@ -179,7 +186,6 @@ public class WorkOrderService {
             throw new RuntimeException("Thiết bị không sẵn sàng bảo trì!");
         }
 
-        // chọn kỹ thuật viên rảnh nhất
         Users bestTech = findBestAvailableTechnicianEntity();
 
         WorkOrder order = new WorkOrder();
@@ -192,7 +198,6 @@ public class WorkOrderService {
 
         WorkOrder saved = workOrderRepository.save(order);
 
-        // gửi mail
         sendEmail(bestTech, saved);
 
         return saved;
@@ -346,26 +351,22 @@ public class WorkOrderService {
         if (today.isBefore(start)) return false;
 
         int cycle = s.getCycleValue();
-        if (cycle <= 0) return false; // Tránh lỗi chia cho 0
+        if (cycle <= 0) return false;
 
         switch (s.getScheduleType()) {
             case DAILY:
-                // Tính tổng số ngày thực tế giữa 2 mốc thời gian
                 long daysBetween = ChronoUnit.DAYS.between(start, today);
                 return daysBetween % cycle == 0;
 
             case WEEKLY:
-                // Cách X tuần bảo trì 1 lần (1 tuần = 7 ngày)
                 long weeksBetween = ChronoUnit.WEEKS.between(start, today);
                 return weeksBetween % cycle == 0 && today.getDayOfWeek() == start.getDayOfWeek();
 
             case MONTHLY:
-                // Cách X tháng bảo trì 1 lần vào cùng 1 ngày trong tháng
                 long monthsBetween = ChronoUnit.MONTHS.between(start, today);
                 return monthsBetween % cycle == 0 && today.getDayOfMonth() == start.getDayOfMonth();
 
             case YEARLY:
-                // Cách X năm bảo trì 1 lần vào đúng ngày đó
                 long yearsBetween = ChronoUnit.YEARS.between(start, today);
                 return yearsBetween % cycle == 0 && today.getMonth() == start.getMonth() 
                        && today.getDayOfMonth() == start.getDayOfMonth();

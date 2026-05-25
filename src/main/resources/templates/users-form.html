@@ -15,17 +15,15 @@ xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" />
   <link id="pagestyle" th:href="@{/assets/css/material-dashboard.css(v='3.2.0')}" rel="stylesheet" />
   <style>
-    /* Hiển thị ký hiệu cấm cho các trường chỉ đọc hoặc bị vô hiệu hóa */
     input[readonly], 
     input:disabled,
     select:disabled,
     textarea[readonly] {
       cursor: not-allowed !important;
-      background-color: #f8f9fa !important; /* Đổi màu nền nhẹ để trông "bị khóa" */
+      background-color: #f8f9fa !important;
       opacity: 0.8;
     }
 
-    /* Tạo đường kẻ đứt cho các ô input group tĩnh của Material Dashboard khi bị khóa */
     .input-group.input-group-static input[readonly] {
       border-bottom: 1px dashed #d2d6da !important;
     }
@@ -99,6 +97,7 @@ xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 				        <option th:each="role : ${roles}" 
 				                th:value="${role.id}" 
 				                th:text="${role.roleName == 'ADMIN' ? 'QUẢN LÝ' : 
+                                  role.roleName == 'ACCOUNTANT' ? 'KẾ TOÁN':
 				                          (role.roleName == 'TECHNICIAN' ? 'KỸ THUẬT VIÊN' : 'NGƯỜI DÙNG CUỐI')}"
 				                th:selected="${role.roleName == user.roleName}">
 				        </option>

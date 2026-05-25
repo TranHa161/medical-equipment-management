@@ -2,8 +2,8 @@ package com.example.demo.controller;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Map;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -11,24 +11,27 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.example.demo.dto.WorkOrderDTO;
 import com.example.demo.enums.WorkOrderStatus;
 import com.example.demo.model.WorkOrder;
 import com.example.demo.service.WorkOrderService;
+import com.example.demo.service.S3Service;
 
 @Controller
 @RequestMapping("/work-orders")
 public class WorkOrderController {
 
     private final WorkOrderService workOrderService;
+    private final S3Service s3Service;
 
-    public WorkOrderController(WorkOrderService workOrderService) {
+    public WorkOrderController(WorkOrderService workOrderService, S3Service s3Service) {
         this.workOrderService = workOrderService;
+        this.s3Service = s3Service;
     }
 
     @GetMapping()
@@ -92,20 +95,44 @@ public class WorkOrderController {
     @ResponseBody
     public ResponseEntity<String> complete(
             @PathVariable Long workOrderId,
-            @RequestBody Map<String, Object> payload,
+            @RequestParam("result") String result,
+            @RequestParam("cost") String costStr,
+            @RequestParam(value = "imgBefore", required = false) MultipartFile imgBefore,
+            @RequestParam(value = "imgAfter", required = false) MultipartFile imgAfter,
             Authentication auth) {
 
-        String currentUsername = auth.getName();
-        
-        String result = (String) payload.get("result");
-        BigDecimal cost = new BigDecimal(payload.get("cost").toString());
-        
-        String evidenceBeforeUrl = (String) payload.get("evidenceBeforeUrl");
-        String evidenceAfterUrl = (String) payload.get("evidenceAfterUrl");
+        try {
+            String currentUsername = auth.getName();
+            BigDecimal cost = new BigDecimal(costStr);
 
-        workOrderService.completeWorkOrder(workOrderId, currentUsername, result, cost, evidenceBeforeUrl, evidenceAfterUrl);
+            // 1. Upload ảnh lên S3 và lấy URL (nếu có ảnh gửi lên)
+            String evidenceBeforeUrl = null;
+            if (imgBefore != null && !imgBefore.isEmpty()) {
+                evidenceBeforeUrl = s3Service.uploadFile(imgBefore);
+            }
 
-        return ResponseEntity.ok("Đã nộp báo cáo hoàn thành, đang chờ nghiệm thu!");
+            String evidenceAfterUrl = null;
+            if (imgAfter != null && !imgAfter.isEmpty()) {
+                evidenceAfterUrl = s3Service.uploadFile(imgAfter);
+            }
+
+            // 2. Gọi service xử lý logic với các URL đã có
+            workOrderService.completeWorkOrder(
+                workOrderId, 
+                currentUsername, 
+                result, 
+                cost, 
+                evidenceBeforeUrl, 
+                evidenceAfterUrl
+            );
+
+            return ResponseEntity.ok("Đã nộp báo cáo hoàn thành, đang chờ nghiệm thu!");
+
+        } catch (Exception e) {
+            // Log lỗi tại đây
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                .body("Lỗi xử lý: " + e.getMessage());
+        }
     }
 
     private WorkOrderDTO mapToDTO(WorkOrder order) {

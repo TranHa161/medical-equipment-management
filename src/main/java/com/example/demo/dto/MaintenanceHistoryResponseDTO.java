@@ -1,5 +1,7 @@
 package com.example.demo.dto;
 
+import com.example.demo.enums.MaintenanceStatus;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -20,4 +22,8 @@ public class MaintenanceHistoryResponseDTO {
     private java.time.LocalDateTime maintenanceDate;
     private String result;
     private java.math.BigDecimal cost;
+    private MaintenanceStatus status;
+
+    private String evidenceBeforeUrl;
+    private String evidenceAfterUrl;
 }
