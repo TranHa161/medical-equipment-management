@@ -148,27 +148,37 @@ public class WorkOrderService {
         history.setBeforeImageUrl(imgBefore);
         history.setAfterImageUrl(imgAfter);
         
-        history.setStatus(MaintenanceStatus.PENDING_ACCEPTANCE); 
-
         if (order.getDevice() != null && order.getDevice().getCompany() != null) {
             history.setCompanyId(order.getDevice().getCompany()); 
         }
 
-        historyRepository.save(history);
+        boolean isSchedule = (order.getSchedule() != null);
 
-        String recipientEmail;
-        if (order.getRequest() != null && order.getRequest().getRequester() != null) {
-            recipientEmail = order.getRequest().getRequester().getEmail();
+        if (isSchedule) {
+            history.setStatus(MaintenanceStatus.USER_ACCEPTED); 
         } else {
-            recipientEmail = "tran559@gmail.com";
+            history.setStatus(MaintenanceStatus.PENDING_ACCEPTANCE); 
         }
 
-        notificationService.notifyUserForAcceptance(
-            order.getId(), 
-            order.getDevice().getDeviceType().getTypeName(), 
-            order.getTechnician().getFullName(),
-            recipientEmail
-        );
+        historyRepository.save(history);
+
+        if (!isSchedule) {
+            String recipientEmail;
+            if (order.getRequest() != null && order.getRequest().getRequester() != null) {
+                recipientEmail = order.getRequest().getRequester().getEmail();
+            } else {
+                recipientEmail = "tran559@gmail.com";
+            }
+
+            notificationService.notifyUserForAcceptance(
+                order.getId(), 
+                order.getDevice().getDeviceType().getTypeName(), 
+                order.getTechnician().getFullName(),
+                recipientEmail
+            );
+        } else {
+            notificationService.notifyAccountantForApproval(order.getId(), order.getDevice().getDeviceType().getTypeName(), order.getTechnician().getFullName());
+        }
     }
 	
     public WorkOrder createWorkOrderFromSchedule(Long scheduleId) {
