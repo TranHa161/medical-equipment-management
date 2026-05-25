@@ -1,6 +1,7 @@
 package com.example.demo.service;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -392,6 +393,11 @@ public class MaintenanceService {
         Users accountant = usersRepository.findByUsername(accountantUsername).orElseThrow();
         history.setStatus(MaintenanceStatus.ACCOUNTANT_APPROVED);
         history.setApprovedBy(accountant);
+
+        if (history.getDevice() != null) {
+            history.getDevice().setStatus(DeviceStatus.ACTIVE); 
+            history.getDevice().setLastMaintenanceDate(LocalDate.now());
+        }
 
         Company company = history.getDevice().getCompany(); 
         BulkInvoice bulkInvoice = bulkInvoiceRepository.findByCompanyAndStatus(company, "PENDING")

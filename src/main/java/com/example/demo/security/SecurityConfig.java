@@ -34,7 +34,6 @@ public class SecurityConfig {
 
             .httpBasic(Customizer.withDefaults())
             
-                // ⭐ FORM LOGIN
             .formLogin(form -> form
             	    .loginPage("/login")              // GET hiển thị trang
             	    .loginProcessingUrl("/login")  // POST xử lý login
