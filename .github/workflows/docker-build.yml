@@ -49,16 +49,14 @@ jobs:
         script: |
           docker stop medical-app || true
           docker rm medical-app || true
-
-          docker rmi tranha161/medical-web:latest || true
-
-          docker pull tranha161/medical-web:latest
           
+          docker rmi tranha161/medical-web:latest || true
+          
+          docker pull tranha161/medical-web:latest
+
           docker run -d -p 8080:8080 \
             --name medical-app \
             -e VNPAY_RETURN_URL="${{ secrets.VNPAY_RETURN_URL }}" \
-            -e AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY }}" \
-            -e AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_KEY }}" \
-            -e AWS_REGION="ap-southeast-1" \
+            -e JAVA_OPTS="-Dcloud.aws.credentials.access-key=${{ secrets.AWS_ACCESS_KEY }} -Dcloud.aws.credentials.secret-key=${{ secrets.AWS_SECRET_KEY }} -Dcloud.aws.region.static=ap-southeast-1" \
             --restart always \
             tranha161/medical-web:latest
