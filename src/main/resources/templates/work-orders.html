@@ -170,69 +170,69 @@
 
   <script>
     function completeOrder(orderId) {
-      Swal.fire({
-          title: 'Báo cáo hoàn thành',
-          html: `
-              <div class="text-start">
-                  <label class="form-label text-sm">Kết quả xử lý:</label>
-                  <textarea id="swal-result" class="form-control border px-2" rows="3" placeholder="Máy đã hoạt động bình thường..."></textarea>
-                  
-                  <label class="form-label text-sm mt-3">Chi phí phát sinh (VND):</label>
-                  <input id="swal-cost" type="number" class="form-control border px-2" value="0">
+        Swal.fire({
+            title: 'Báo cáo hoàn thành',
+            html: `
+                <div class="text-start">
+                    <label class="form-label text-sm">Kết quả xử lý:</label>
+                    <textarea id="swal-result" class="form-control border px-2" rows="3" placeholder="Máy đã hoạt động bình thường..."></textarea>
+                    
+                    <label class="form-label text-sm mt-3">Chi phí phát sinh (VND):</label>
+                    <input id="swal-cost" type="number" class="form-control border px-2" value="0">
 
-                  <label class="form-label text-sm mt-3">Ảnh trước khi bảo trì:</label>
-                  <input id="swal-imgBefore" type="file" class="form-control border px-2" accept="image/*">
+                    <label class="form-label text-sm mt-3">Ảnh trước khi bảo trì:</label>
+                    <input id="swal-imgBefore" type="file" class="form-control border px-2" accept="image/*">
 
-                  <label class="form-label text-sm mt-3">Ảnh sau khi bảo trì:</label>
-                  <input id="swal-imgAfter" type="file" class="form-control border px-2" accept="image/*">
-              </div>
-          `,
-          icon: 'info',
-          showCancelButton: true,
-          confirmButtonText: 'Xác nhận hoàn thành',
-          cancelButtonText: 'Hủy',
-          preConfirm: () => {
-              const result = document.getElementById('swal-result').value;
-              const cost = document.getElementById('swal-cost').value;
-              const imgBefore = document.getElementById('swal-imgBefore').files[0];
-              const imgAfter = document.getElementById('swal-imgAfter').files[0];
+                    <label class="form-label text-sm mt-3">Ảnh sau khi bảo trì:</label>
+                    <input id="swal-imgAfter" type="file" class="form-control border px-2" accept="image/*">
+                </div>
+            `,
+            icon: 'info',
+            showCancelButton: true,
+            confirmButtonText: 'Xác nhận hoàn thành',
+            cancelButtonText: 'Hủy',
+            preConfirm: () => {
+                const result = document.getElementById('swal-result').value;
+                const cost = document.getElementById('swal-cost').value;
+                const imgBefore = document.getElementById('swal-imgBefore').files[0];
+                const imgAfter = document.getElementById('swal-imgAfter').files[0];
 
-              if (!result) { 
-                  Swal.showValidationMessage('Vui lòng nhập kết quả sửa chữa!');
-                  return false;
-              }
+                if (!result) { 
+                    Swal.showValidationMessage('Vui lòng nhập kết quả sửa chữa!');
+                    return false;
+                }
 
-              return { result, cost, imgBefore, imgAfter };
-          }
-      }).then((res) => {
-          if (res.isConfirmed) {
-              const formData = new FormData();
-              formData.append('result', res.value.result);
-              formData.append('cost', res.value.cost);
-              if (res.value.imgBefore) formData.append('imgBefore', res.value.imgBefore);
-              if (res.value.imgAfter) formData.append('imgAfter', res.value.imgAfter);
+                return { result, cost, imgBefore, imgAfter };
+            }
+        }).then((res) => {
+            if (res.isConfirmed) {
+                const formData = new FormData();
+                formData.append('result', res.value.result);
+                formData.append('cost', res.value.cost);
+                if (res.value.imgBefore) formData.append('imgBefore', res.value.imgBefore);
+                if (res.value.imgAfter) formData.append('imgAfter', res.value.imgAfter);
 
-              Swal.fire({
-                  title: 'Đang tải lên...',
-                  didOpen: () => { Swal.showLoading(); }
-              });
+                Swal.fire({
+                    title: 'Đang tải lên...',
+                    didOpen: () => { Swal.showLoading(); }
+                });
 
-              fetch(`/work-orders/complete/${orderId}`, {
-                  method: 'POST',
-                  body: formData
-              }).then(response => {
-                  if (response.ok) {
-                      Swal.fire('Thành công!', 'Đã cập nhật trạng thái và tải lên hình ảnh.', 'success')
-                          .then(() => location.reload());
-                  } else {
-                      Swal.fire('Lỗi!', 'Có lỗi xảy ra khi lưu báo cáo.', 'error');
-                  }
-              }).catch(err => {
-                  Swal.fire('Lỗi!', 'Không thể kết nối đến server.', 'error');
-              });
-          }
-      });
-}
+                fetch(`/work-orders/complete/${orderId}`, {
+                    method: 'POST',
+                    body: formData
+                }).then(response => {
+                    if (response.ok) {
+                        Swal.fire('Thành công!', 'Đã cập nhật trạng thái và tải lên hình ảnh.', 'success')
+                            .then(() => location.reload());
+                    } else {
+                        Swal.fire('Lỗi!', 'Có lỗi xảy ra khi lưu báo cáo.', 'error');
+                    }
+                }).catch(err => {
+                    Swal.fire('Lỗi!', 'Không thể kết nối đến server.', 'error');
+                });
+            }
+        });
+  }
 
     function cancelOrder(orderId) {
         Swal.fire({

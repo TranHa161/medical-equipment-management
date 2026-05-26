@@ -105,7 +105,6 @@ public class WorkOrderController {
             String currentUsername = auth.getName();
             BigDecimal cost = new BigDecimal(costStr);
 
-            // 1. Upload ảnh lên S3 và lấy URL (nếu có ảnh gửi lên)
             String evidenceBeforeUrl = null;
             if (imgBefore != null && !imgBefore.isEmpty()) {
                 evidenceBeforeUrl = s3Service.uploadFile(imgBefore);
@@ -116,7 +115,6 @@ public class WorkOrderController {
                 evidenceAfterUrl = s3Service.uploadFile(imgAfter);
             }
 
-            // 2. Gọi service xử lý logic với các URL đã có
             workOrderService.completeWorkOrder(
                 workOrderId, 
                 currentUsername, 
@@ -129,7 +127,6 @@ public class WorkOrderController {
             return ResponseEntity.ok("Đã nộp báo cáo hoàn thành, đang chờ nghiệm thu!");
 
         } catch (Exception e) {
-            // Log lỗi tại đây
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                                 .body("Lỗi xử lý: " + e.getMessage());
         }

@@ -18,6 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.example.demo.dto.DeviceDTO;
 import com.example.demo.dto.DeviceDetailResponseDTO;
 import com.example.demo.model.Device;
+import com.example.demo.repository.CompanyRepository;
 import com.example.demo.repository.DeviceRepository;
 import com.example.demo.repository.DeviceTypeRepository;
 import com.example.demo.service.DeviceService;
@@ -29,6 +30,7 @@ public class DeviceController {
     @Autowired private DeviceService deviceService;
     @Autowired private DeviceTypeRepository typeRepository;
     @Autowired private DeviceRepository deviceRepository;
+    @Autowired private CompanyRepository companyRepository;
 
     @GetMapping
     public String listDevices(Model model, 
@@ -46,6 +48,7 @@ public class DeviceController {
         device.setStatus("ACTIVE");
         model.addAttribute("device", device);
         model.addAttribute("deviceTypes", typeRepository.findAll());
+        model.addAttribute("companies", companyRepository.findAll());
         return "device-form"; 
     }
 
@@ -66,8 +69,13 @@ public class DeviceController {
             dto.setManualUrl(entity.getDeviceType().getManualUrl()); 
         }
 
+        if (entity.getCompany() != null) {
+            dto.setCompanyId(entity.getCompany().getId());
+        }
+
         model.addAttribute("device", dto);
         model.addAttribute("deviceTypes", typeRepository.findAll());
+        model.addAttribute("companies", companyRepository.findAll());
         return "device-form";
     }
 

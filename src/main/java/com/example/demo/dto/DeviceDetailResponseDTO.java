@@ -10,7 +10,6 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor @AllArgsConstructor @Builder
 public class DeviceDetailResponseDTO {
-    // Thông tin từ Device
     private Integer id;
     private String serialNumber;
     private String location;
@@ -18,8 +17,9 @@ public class DeviceDetailResponseDTO {
     private java.time.LocalDate lastMaintenanceDate;
     private String imageUrl;
     private String notes;
+    private Integer companyId;
+    private String companyName;
 
-    // Thông tin từ DeviceType
     private String typeName;
     private String manufacturer;
     private String model;

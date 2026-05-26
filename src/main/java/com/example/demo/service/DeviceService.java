@@ -13,9 +13,11 @@ import com.example.demo.dto.DeviceDTO;
 import com.example.demo.dto.DeviceDetailResponseDTO;
 import com.example.demo.enums.DeviceStatus;
 import com.example.demo.enums.WorkOrderStatus;
+import com.example.demo.model.Company;
 import com.example.demo.model.Device;
 import com.example.demo.model.DeviceType;
 import com.example.demo.model.WorkOrder;
+import com.example.demo.repository.CompanyRepository;
 import com.example.demo.repository.DeviceRepository;
 import com.example.demo.repository.DeviceTypeRepository;
 import com.example.demo.repository.WorkOrderRepository;
@@ -32,6 +34,9 @@ public class DeviceService {
 
     @Autowired
     private S3Service s3Service;
+
+    @Autowired
+    private CompanyRepository companyRepository;
     
     public List<DeviceDTO> searchDevices(String keyword, DeviceStatus excludeStatus) {
         List<Device> devices;
@@ -89,6 +94,26 @@ public class DeviceService {
         } else {
             throw new RuntimeException("Vui lòng chọn hoặc nhập thông tin loại thiết bị!");
         }
+        Company targetCompany = null;
+
+        if (dto.getCompanyId() != null) {
+            targetCompany = companyRepository.findById(dto.getCompanyId())
+                    .orElseThrow(() -> new RuntimeException("Công ty đối tác không tồn tại!"));
+        } else if (dto.getNewCompanyName() != null && !dto.getNewCompanyName().trim().isEmpty()) {
+            String cleanCompanyName = dto.getNewCompanyName().trim();
+            
+            Optional<Company> existingCompany = companyRepository.findByName(cleanCompanyName);
+            if (existingCompany.isPresent()) {
+                targetCompany = existingCompany.get();
+            } else {
+                Company newCompany = new Company();
+                newCompany.setName(cleanCompanyName);
+                newCompany.setTaxCode(dto.getCompanyTaxCode());
+                newCompany.setContactInfo(dto.getCompanyContactInfo());
+                
+                targetCompany = companyRepository.save(newCompany);
+            }
+        }
 
         Device device = new Device();
         device.setSerialNumber(dto.getSerialNumber());
@@ -96,6 +121,7 @@ public class DeviceService {
         device.setNotes(dto.getNotes());       
         device.setDeviceType(type);
         device.setStatus(DeviceStatus.valueOf(dto.getStatus()));
+        device.setCompany(targetCompany);
         
         if (imageFile != null && !imageFile.isEmpty()) {
             try {
@@ -133,6 +159,28 @@ public class DeviceService {
             device.setLocation(dto.getLocation());
             device.setNotes(dto.getNotes()); 
 
+            if (dto.getCompanyId() != null) {
+                Company targetCompany = companyRepository.findById(dto.getCompanyId())
+                        .orElseThrow(() -> new RuntimeException("Công ty đối tác không tồn tại!"));
+                device.setCompany(targetCompany);
+            } else if (dto.getNewCompanyName() != null && !dto.getNewCompanyName().trim().isEmpty()) {
+                String cleanCompanyName = dto.getNewCompanyName().trim();
+                Optional<Company> existingCompany = companyRepository.findByName(cleanCompanyName);
+                
+                if (existingCompany.isPresent()) {
+                    device.setCompany(existingCompany.get());
+                } else {
+                    Company newCompany = new Company();
+                    newCompany.setName(cleanCompanyName);
+                    newCompany.setTaxCode(dto.getCompanyTaxCode());
+                    newCompany.setContactInfo(dto.getCompanyContactInfo());
+                    
+                    Company savedCompany = companyRepository.save(newCompany);
+                    device.setCompany(savedCompany);
+                }
+            } else {
+                device.setCompany(null); 
+            }
 
             if (imageFile != null && !imageFile.isEmpty()) {
                 try {
@@ -240,6 +288,10 @@ public class DeviceService {
         
         dto.setLocation(device.getLocation());
         
+        if (device.getCompany() != null) {
+            dto.setCompanyId(device.getCompany().getId());
+        }
+
         if (device.getStatus() != null) {
             dto.setStatus(device.getStatus().name());
         }
@@ -261,6 +313,11 @@ public class DeviceService {
         resp.setImageUrl(device.getImageUrl());
         resp.setNotes(device.getNotes());
         resp.setLastMaintenanceDate(device.getLastMaintenanceDate());
+
+        if (device.getCompany() != null) {
+            resp.setCompanyId(device.getCompany().getId());
+            resp.setCompanyName(device.getCompany().getName());
+        }
 
         if (device.getDeviceType() != null) {
             DeviceType type = device.getDeviceType();
@@ -300,6 +357,11 @@ public class DeviceService {
 
         if (entity.getLastMaintenanceDate() != null) {
         	dto.setLastMaintenanceDate(entity.getLastMaintenanceDate());
+        }
+
+        if (entity.getCompany() != null) {
+            dto.setCompanyId(entity.getCompany().getId());
+            dto.setCompanyName(entity.getCompany().getName());
         }
 
         if (entity.getDeviceType() != null) {

@@ -1,12 +1,11 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org"
-xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <link rel="apple-touch-icon" sizes="76x76" th:href="@{/assets/img/logo.png}">
   <link rel="icon" type="image/png" th:href="@{/assets/img/logo.png}">
-  <title>Quản lý thiết bị - HUST MEDICAL</title>
+  <title>Quản lý thiết bị - HUST MEDICAL</title>
   
   <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Inter:300,400,500,600,700,900" />
   <link th:href="@{/assets/css/nucleo-icons.css}" rel="stylesheet" />
@@ -15,26 +14,24 @@ xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" />
   <link id="pagestyle" th:href="@{/assets/css/material-dashboard.css(v='3.2.0')}" rel="stylesheet" />
   <style>
-    /* Chỉ áp dụng cho các ô input, select hoặc textarea có thuộc tính readonly */
     input[readonly], 
     input:disabled,
     select:disabled,
     textarea[readonly] {
       cursor: not-allowed !important;
-      background-color: #f0f2f5 !important; /* Đổi màu nền nhẹ để trông "bị khóa" hơn */
+      background-color: #f0f2f5 !important;
       opacity: 0.8;
     }
 
-    /* Riêng với Material Dashboard, ta cần xử lý cả phần bao quanh nếu cần */
     .input-group.input-group-static input[readonly] {
-      border-bottom: 1px dashed #d2d6da; /* Tạo hiệu ứng đường kẻ đứt cho ô không sửa được */
+      border-bottom: 1px dashed #d2d6da;
     }
   </style>
 </head>
 
 <body class="g-sidenav-show bg-gray-100">
   <aside th:replace="~{fragments/sidebar :: sidebar('devices')}"></aside>
-	
+    
   <main class="main-content position-relative max-height-vh-100 h-100 border-radius-lg">
       <div class="container-fluid py-4">
           <div class="row">
@@ -105,20 +102,65 @@ xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
                                           <div class="col-md-6" sec:authorize="hasRole('ADMIN')">
                                               <div class="input-group input-group-static mb-4">
                                                   <label for="typeId" class="text-info font-weight-bold text-xs text-uppercase">Loại thiết bị y tế</label>
-												  <select class="form-control" id="typeId" onchange="handleTypeChange()">
-												      <option value="" data-manufacturer="" data-model="" data-cycle="" data-description="" data-manual-url="">Loại thiết bị</option>
-												      <option th:each="type : ${deviceTypes}" 
-												              th:value="${type.id}" 
-												              th:text="${type.typeName}"
-												              th:data-manufacturer="${type.manufacturer}"
-												              th:data-model="${type.model}"
-												              th:data-cycle="${type.defaultMaintenanceCycle}"
-												              th:data-description="${type.typeDescription}"
-												              th:data-manual-url="${type.manualUrl}" 
-												              th:selected="${device.typeId != null && type.id == device.typeId}">
-												      </option>
-												      <option value="NEW" class="text-info font-weight-bold">+ Thêm loại thiết bị mới...</option>
-												  </select>
+                                                  <select class="form-control" id="typeId" onchange="handleTypeChange()">
+                                                      <option value="" data-manufacturer="" data-model="" data-cycle="" data-description="" data-manual-url="">Chọn loại thiết bị</option>
+                                                      <option th:each="type : ${deviceTypes}" 
+                                                              th:value="${type.id}" 
+                                                              th:text="${type.typeName}"
+                                                              th:data-manufacturer="${type.manufacturer}"
+                                                              th:data-model="${type.model}"
+                                                              th:data-cycle="${type.defaultMaintenanceCycle}"
+                                                              th:data-description="${type.typeDescription}"
+                                                              th:data-manual-url="${type.manualUrl}" 
+                                                              th:selected="${device.typeId != null && type.id == device.typeId}">
+                                                      </option>
+                                                      <option value="NEW" class="text-info font-weight-bold">+ Thêm loại thiết bị mới...</option>
+                                                  </select>
+                                              </div>
+                                          </div>
+                                      </div>
+
+                                      <div class="row">
+                                          <div class="col-12" sec:authorize="hasRole('ADMIN')">
+                                              <div class="input-group input-group-static mb-4">
+                                                  <label for="companyId" class="text-info font-weight-bold text-xs text-uppercase">Công ty nhập khẩu đối tác</label>
+                                                  <select class="form-control" id="companyId" onchange="handleCompanyChange()">
+                                                      <option value="" data-tax="" data-contact="">Chọn doanh nghiệp đối tác</option>
+                                                      <option th:each="comp : ${companies}" 
+                                                              th:value="${comp.id}" 
+                                                              th:text="${comp.name}"
+                                                              th:data-tax="${comp.taxCode}"
+                                                              th:data-contact="${comp.contactInfo}"
+                                                              th:selected="${device.companyId != null && comp.id == device.companyId}">
+                                                      </option>
+                                                      <option value="NEW" class="text-success font-weight-bold">+ Thêm công ty phân phối mới...</option>
+                                                  </select>
+                                              </div>
+                                          </div>
+                                      </div>
+
+                                      <div id="companyDetailSection" style="display: none;" class="bg-gray-100 p-4 border-radius-lg mb-4 shadow-inner">
+                                          <h6 class="text-xs font-weight-bolder mb-3 text-dark text-uppercase">
+                                              <i class="material-symbols-rounded text-sm me-1">domain</i> Thông tin doanh nghiệp cung cấp
+                                          </h6>
+                                          <div class="row">
+                                              <div class="col-md-6" id="newCompanyInputGroup" style="display: none;">
+                                                  <div class="input-group input-group-static is-filled mb-4"> 
+                                                      <label class="text-info font-weight-bold text-xs text-uppercase">Tên công ty mới <span class="text-danger">*</span></label>
+                                                      <input type="text" id="newCompanyName" class="form-control" placeholder="Nhập tên đơn vị...">
+                                                  </div>
+                                              </div>
+                                              <div class="col-md-6">
+                                                  <div class="input-group input-group-static is-filled mb-4"> 
+                                                      <label class="text-info font-weight-bold text-xs text-uppercase">Mã số thuế</label>
+                                                      <input type="text" id="companyTaxCode" class="form-control" readonly placeholder="Mã số thuế...">
+                                                  </div>
+                                              </div>
+                                              <div class="col-12">
+                                                  <div class="input-group input-group-static is-filled mb-0"> 
+                                                      <label class="text-info font-weight-bold text-xs text-uppercase">Thông tin liên hệ (Địa chỉ/SĐT)</label>
+                                                      <textarea id="companyContactInfo" class="form-control" rows="2" readonly placeholder="Thông tin liên hệ chi tiết..."></textarea>
+                                                  </div>
                                               </div>
                                           </div>
                                       </div>
@@ -152,27 +194,26 @@ xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
                                                       <input type="number" id="defaultMaintenanceCycle" class="form-control" readonly>
                                                   </div>
                                               </div>
-											  <div class="col-md-6">
-											      <div class="input-group input-group-static mb-4">
-											          <label class="text-info font-weight-bold text-xs text-uppercase">Tài liệu hướng dẫn</label>
-											          <div class="d-flex align-items-center w-100 mt-2">
-											              <label for="manualFile" class="btn btn-outline-info btn-sm mb-0 px-3">
-											                  <i class="material-symbols-rounded text-sm me-2">upload_file</i> Chọn tệp...
-											              </label>
-														  <span id="manualFileName" class="text-xs ms-3 text-secondary italic">
-														      <th:block th:if="${device.manualUrl != null}">
-														          <i class="material-symbols-rounded text-xs">description</i> 
-														          <a th:href="${device.manualUrl}" target="_blank" class="text-info font-weight-bold">Xem tài liệu hiện tại</a>
-														      </th:block>
-														      
-														      <th:block th:unless="${device.manualUrl != null}">
-														          Chưa có tệp nào được chọn
-														      </th:block>
-														  </span>
-											              <input type="file" id="manualFile" class="d-none" accept=".pdf,.doc,.docx" onchange="displayFileName()">
-											          </div>
-											      </div>
-											  </div>
+                                              <div class="col-md-6">
+                                                  <div class="input-group input-group-static mb-4">
+                                                      <label class="text-info font-weight-bold text-xs text-uppercase">Tài liệu hướng dẫn</label>
+                                                      <div class="d-flex align-items-center w-100 mt-2">
+                                                          <label for="manualFile" class="btn btn-outline-info btn-sm mb-0 px-3">
+                                                              <i class="material-symbols-rounded text-sm me-2">upload_file</i> Chọn tệp...
+                                                          </label>
+                                                          <span id="manualFileName" class="text-xs ms-3 text-secondary italic">
+                                                              <th:block th:if="${device.manualUrl != null}">
+                                                                  <i class="material-symbols-rounded text-xs">description</i> 
+                                                                  <a th:href="${device.manualUrl}" target="_blank" class="text-info font-weight-bold">Xem tài liệu hiện tại</a>
+                                                              </th:block>
+                                                              <th:block th:unless="${device.manualUrl != null}">
+                                                                  Chưa có tệp nào được chọn
+                                                              </th:block>
+                                                          </span>
+                                                          <input type="file" id="manualFile" class="d-none" accept=".pdf,.doc,.docx" onchange="displayFileName()">
+                                                      </div>
+                                                  </div>
+                                              </div>
                                               <div class="col-12">
                                                   <div class="input-group input-group-static mb-0">
                                                       <label class="text-info font-weight-bold text-xs text-uppercase">Mô tả chi tiết kỹ thuật</label>
@@ -211,126 +252,173 @@ xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
   <script>
-	let imageChanged = false;
-	let manualChanged = false;
-      // 1. Hàm hiển thị tên file tài liệu (Global Scope)
-	  function displayFileName() {
-	      manualChanged = true; // Đánh dấu đã chọn PDF mới
-		  manualChanged = true; 
-		      const input = document.getElementById('manualFile');
-		      const fileNameDisplay = document.getElementById('manualFileName');
-		      if (input.files.length > 0) {
-		          // Hiện tên file mới vừa chọn
-		          fileNameDisplay.innerHTML = `<i class="material-symbols-rounded text-xs">add_circle</i> <span class="text-info font-weight-bold">${input.files[0].name}</span>`;
-		      }
-	  }
+    let imageChanged = false;
+    let manualChanged = false;
 
-      // 2. Logic chuyển đổi chế độ xem/nhập loại máy
-      function handleTypeChange() {
-		const select = document.getElementById('typeId');
-	    const selectedOption = select.options[select.selectedIndex];
-	    
-	    // Lấy dữ liệu từ data-attributes
-	    const manufacturer = selectedOption.getAttribute('data-manufacturer') || '';
-	    const model = selectedOption.getAttribute('data-model') || '';
-	    const cycle = selectedOption.getAttribute('data-cycle') || '';
-	    const description = selectedOption.getAttribute('data-description') || '';
-	    const manualUrl = selectedOption.getAttribute('data-manual-url') || ''; // Lấy link PDF cũ
-	    
-	    const detailSection = document.getElementById('typeDetailSection');
-	    const newTypeGroup = document.getElementById('newTypeInputGroup');
-	    const fileNameDisplay = document.getElementById('manualFileName');
+    function displayFileName() {
+        manualChanged = true; 
+        const input = document.getElementById('manualFile');
+        const fileNameDisplay = document.getElementById('manualFileName');
+        if (input.files.length > 0) {
+            fileNameDisplay.innerHTML = `<i class="material-symbols-rounded text-xs">add_circle</i> <span class="text-info font-weight-bold">${input.files[0].name}</span>`;
+        }
+    }
 
-	    if (select.value === 'NEW') {
-	        detailSection.style.display = 'block';
-	        newTypeGroup.style.display = 'block';
-	        fileNameDisplay.innerText = "Chưa có tệp nào được chọn";
-	        // Reset các ô input để nhập mới
-	        ["manufacturer", "model", "defaultMaintenanceCycle", "typeDescription", "newTypeName"].forEach(id => {
-	            const el = document.getElementById(id);
-	            el.value = ''; el.readOnly = false;
-	        });
-	    } else if (select.value !== "") {
-	        detailSection.style.display = 'block';
-	        newTypeGroup.style.display = 'none';
-	        document.getElementById('manufacturer').value = manufacturer;
-	        document.getElementById('model').value = model;
-	        document.getElementById('defaultMaintenanceCycle').value = cycle;
-	        document.getElementById('typeDescription').value = description;
+    function handleCompanyChange() {
+        const select = document.getElementById('companyId');
+        if (!select) return;
+        
+        const selectedOption = select.options[select.selectedIndex];
+        
+        const taxCode = selectedOption.getAttribute('data-tax') || '';
+        const contactInfo = selectedOption.getAttribute('data-contact') || '';
+        
+        const detailSection = document.getElementById('companyDetailSection');
+        const newCompanyGroup = document.getElementById('newCompanyInputGroup');
 
-	        // HIỂN THỊ LINK PDF HIỆN TẠI
-	        if (manualUrl) {
-	            fileNameDisplay.innerHTML = `<i class="material-symbols-rounded text-xs">description</i> <a href="${manualUrl}" target="_blank" class="text-info font-weight-bold">Xem tài liệu hiện tại</a>`;
-	        } else {
-	            fileNameDisplay.innerText = "Loại này chưa có tài liệu";
-	        }
-	    } else {
-	        detailSection.style.display = 'none';
-	    }
-      }
+        if (select.value === 'NEW') {
+            detailSection.style.display = 'block';
+            newCompanyGroup.style.display = 'block';
+            ["newCompanyName", "companyTaxCode", "companyContactInfo"].forEach(id => {
+                const el = document.getElementById(id);
+                el.value = ''; el.readOnly = false;
+            });
+        } else if (select.value !== "") {
+            detailSection.style.display = 'block';
+            newCompanyGroup.style.display = 'none';
+            document.getElementById('companyTaxCode').value = taxCode;
+            document.getElementById('companyContactInfo').value = contactInfo;
+            
+            ["companyTaxCode", "companyContactInfo"].forEach(id => {
+                document.getElementById(id).readOnly = true;
+            });
+        } else {
+            detailSection.style.display = 'none';
+        }
+    }
 
-      // 3. Xem trước ảnh
-	  function previewFile() {
-	      imageChanged = true; // Đánh dấu đã chọn ảnh mới
-	      const preview = document.getElementById('previewImg');
-	      const file = document.getElementById('imageFile').files[0];
-	      const reader = new FileReader();
-	      reader.onloadend = function () { preview.src = reader.result; }
-	      if (file) { reader.readAsDataURL(file); }
-	  }
+    function handleTypeChange() {
+        const select = document.getElementById('typeId');
+        if (!select) return;
+        const selectedOption = select.options[select.selectedIndex];
+        
+        const manufacturer = selectedOption.getAttribute('data-manufacturer') || '';
+        const model = selectedOption.getAttribute('data-model') || '';
+        const cycle = selectedOption.getAttribute('data-cycle') || '';
+        const description = selectedOption.getAttribute('data-description') || '';
+        const manualUrl = selectedOption.getAttribute('data-manual-url') || ''; 
+        
+        const detailSection = document.getElementById('typeDetailSection');
+        const newTypeGroup = document.getElementById('newTypeInputGroup');
+        const fileNameDisplay = document.getElementById('manualFileName');
 
-      // 4. Submit Form
-      function submitForm() {
-		const form = document.getElementById('deviceForm');
-		    const id = form.getAttribute('data-id');
-		    const url = id ? `/devices/edit/${id}` : `/devices/add`;
-		    const formData = new FormData();
+        if (select.value === 'NEW') {
+            detailSection.style.display = 'block';
+            newTypeGroup.style.display = 'block';
+            fileNameDisplay.innerText = "Chưa có tệp nào được chọn";
+            ["manufacturer", "model", "defaultMaintenanceCycle", "typeDescription", "newTypeName"].forEach(id => {
+                const el = document.getElementById(id);
+                el.value = ''; el.readOnly = false;
+            });
+        } else if (select.value !== "") {
+            detailSection.style.display = 'block';
+            newTypeGroup.style.display = 'none';
+            document.getElementById('manufacturer').value = manufacturer;
+            document.getElementById('model').value = model;
+            document.getElementById('defaultMaintenanceCycle').value = cycle;
+            document.getElementById('typeDescription').value = description;
 
-		    if (id) formData.append('id', id);
-		    formData.append('serialNumber', document.getElementById('serialNumber').value);
-		    formData.append('location', document.getElementById('location').value);
-		    formData.append('status', document.getElementById('status').value);
-		    formData.append('notes', document.getElementById('notes').value);
+            if (manualUrl) {
+                fileNameDisplay.innerHTML = `<i class="material-symbols-rounded text-xs">description</i> <a href="${manualUrl}" target="_blank" class="text-info font-weight-bold">Xem tài liệu hiện tại</a>`;
+            } else {
+                fileNameDisplay.innerText = "Loại này chưa có tài liệu";
+            }
+            ["manufacturer", "model", "defaultMaintenanceCycle", "typeDescription"].forEach(id => {
+                document.getElementById(id).readOnly = true;
+            });
+        } else {
+            detailSection.style.display = 'none';
+        }
+    }
 
-		    const typeSelect = document.getElementById('typeId');
-		    if (typeSelect.value === 'NEW') {
-		        formData.append('newTypeName', document.getElementById('newTypeName').value);
-		        formData.append('manufacturer', document.getElementById('manufacturer').value);
-		        formData.append('model', document.getElementById('model').value);
-		        formData.append('defaultMaintenanceCycle', document.getElementById('defaultMaintenanceCycle').value);
-		        formData.append('typeDescription', document.getElementById('typeDescription').value);
-		    } else if (typeSelect.value !== "") {
-		        formData.append('typeId', typeSelect.value);
-		    }
+    function previewFile() {
+        imageChanged = true; 
+        const preview = document.getElementById('previewImg');
+        const file = document.getElementById('imageFile').files[0];
+        const reader = new FileReader();
+        reader.onloadend = function () { preview.src = reader.result; }
+        if (file) { reader.readAsDataURL(file); }
+    }
 
-		    // ⭐ SỬA LỖI TRÙNG FILE: Chỉ gửi nếu isChanged = true
-		    const imgInp = document.getElementById('imageFile');
-		    if (imageChanged && imgInp.files.length > 0) {
-		        formData.append('imageFile', imgInp.files[0]);
-		    }
+    function submitForm() {
+        const form = document.getElementById('deviceForm');
+        const id = form.getAttribute('data-id');
+        const url = id ? `/devices/edit/${id}` : `/devices/add`;
+        const formData = new FormData();
 
-		    // ⭐ SỬA LỖI KHÔNG LƯU PDF: Đưa ra ngoài khối 'NEW' để máy nào cũng gửi được
-		    const manualInp = document.getElementById('manualFile');
-		    if (manualChanged && manualInp.files.length > 0) {
-		        formData.append('manualFile', manualInp.files[0]);
-		    }
+        if (id) formData.append('id', id);
+        formData.append('serialNumber', document.getElementById('serialNumber').value);
+        formData.append('location', document.getElementById('location').value);
+        formData.append('status', document.getElementById('status').value);
+        formData.append('notes', document.getElementById('notes').value);
 
-          Swal.fire({ title: 'Đang xử lý...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+        const typeSelect = document.getElementById('typeId');
+        if (typeSelect && typeSelect.value === 'NEW') {
+            formData.append('newTypeName', document.getElementById('newTypeName').value);
+            formData.append('manufacturer', document.getElementById('manufacturer').value);
+            formData.append('model', document.getElementById('model').value);
+            formData.append('defaultMaintenanceCycle', document.getElementById('defaultMaintenanceCycle').value);
+            formData.append('typeDescription', document.getElementById('typeDescription').value);
+        } else if (typeSelect && typeSelect.value !== "") {
+            formData.append('typeId', typeSelect.value);
+        }
 
-          fetch(url, { method: 'POST', body: formData })
-          .then(async response => {
-              if (response.ok) {
-                  Swal.fire({ title: 'Thành công!', text: 'Dữ liệu đã được lưu trữ an toàn.', icon: 'success' })
-                  .then(() => { window.location.href = '/devices'; });
-              } else {
-                  const errorMsg = await response.text();
-                  Swal.fire({ title: 'Lỗi!', text: errorMsg, icon: 'error' });
-              }
-          })
-          .catch(error => { Swal.fire({ title: 'Lỗi kết nối!', text: 'Vui lòng thử lại sau.', icon: 'error' }); });
-      }
+        // ĐÃ ĐỒNG BỘ: Đọc chính xác id="companyId" từ giao diện
+        const companySelect = document.getElementById('companyId');
+        if (companySelect) {
+            if (companySelect.value === 'NEW') {
+                formData.append('newCompanyName', document.getElementById('newCompanyName').value);
+                formData.append('companyTaxCode', document.getElementById('companyTaxCode').value);
+                formData.append('companyContactInfo', document.getElementById('companyContactInfo').value);
+            } else if (companySelect.value !== "") {
+                formData.append('companyId', companySelect.value);
+            }
+        }
 
-      window.onload = handleTypeChange;
+        const imgInp = document.getElementById('imageFile');
+        if (imageChanged && imgInp && imgInp.files.length > 0) {
+            formData.append('imageFile', imgInp.files[0]);
+        }
+
+        const manualInp = document.getElementById('manualFile');
+        if (manualChanged && manualInp && manualInp.files.length > 0) {
+            formData.append('manualFile', manualInp.files[0]);
+        }
+
+        if (companySelect && companySelect.value === 'NEW' && !document.getElementById('newCompanyName').value.trim()) {
+            Swal.fire({ title: 'Lỗi nhập liệu!', text: 'Vui lòng điền tên công ty nhập khẩu mới!', icon: 'warning' });
+            return;
+        }
+
+        Swal.fire({ title: 'Đang xử lý...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+
+        fetch(url, { method: 'POST', body: formData })
+        .then(async response => {
+            if (response.ok) {
+                Swal.fire({ title: 'Thành công!', text: 'Dữ liệu hồ sơ thiết bị đã lưu trữ thành công.', icon: 'success' })
+                .then(() => { window.location.href = '/devices'; });
+            } else {
+                const errorMsg = await response.text();
+                Swal.fire({ title: 'Lỗi!', text: errorMsg, icon: 'error' });
+            }
+        })
+        .catch(error => { Swal.fire({ title: 'Lỗi kết nối!', text: 'Không thể kết nối đến server Cloud.', icon: 'error' }); });
+    }
+
+    window.onload = function() {
+        handleTypeChange();
+        handleCompanyChange();
+    };
   </script>
 </body>
 </html>

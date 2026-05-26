@@ -67,10 +67,18 @@
                       <p class="text-xs text-info font-weight-bold mb-0">VỊ TRÍ LẮP ĐẶT</p>
                       <h6 class="font-weight-bold" th:text="${device.location}">Phòng cấp cứu</h6>
                     </div>
+                    
+                    <div class="col-sm-6 mb-3">
+                      <p class="text-xs text-info font-weight-bold mb-0">CÔNG TY CUNG CẤP</p>
+                      <h6 class="font-weight-bold text-dark" 
+                          th:text="${device.companyName != null && !device.companyName.isEmpty() ? device.companyName : 'Chưa cập nhật'}">Tên doanh nghiệp</h6>
+                    </div>
+
                     <div class="col-sm-6 mb-3">
                       <p class="text-xs text-info font-weight-bold mb-0">CHU KỲ BẢO TRÌ</p>
                       <h6 class="font-weight-bold" th:text="${device.defaultMaintenanceCycle != null ? device.defaultMaintenanceCycle + ' ngày' : 'N/A'}">30 ngày</h6>
                     </div>
+                    
                     <div class="col-sm-6 mb-3">
                       <p class="text-xs text-info font-weight-bold mb-0">BẢO TRÌ GẦN NHẤT</p>
                       <h6 class="font-weight-bold" 
@@ -109,41 +117,42 @@
               </div>
 
               <div class="row mt-5">
-				<div class="col-12">
-				  <div class="nav-wrapper position-relative end-0">
-				    <ul class="nav nav-pills nav-fill p-1" role="tablist">
-				      <li class="nav-item">
-				        <a class="nav-link mb-0 px-0 py-1 active" data-bs-toggle="tab" href="#specs" role="tab" aria-selected="true">
-				          <i class="material-symbols-rounded text-sm me-2">settings_suggest</i>
-				          Thông số kỹ thuật
-				        </a>
-				      </li>
-				      <li class="nav-item">
-				        <a class="nav-link mb-0 px-0 py-1" data-bs-toggle="tab" href="#notes" role="tab" aria-selected="false">
-				          <i class="material-symbols-rounded text-sm me-2">history_edu</i>
-				          Ghi chú vận hành
-				        </a>
-				      </li>
-				    </ul>
-				  </div>
-				  
-				  <div class="tab-content mt-3">
-				    <div class="tab-pane fade show active p-3 border-radius-lg bg-gray-100 shadow-inner" id="specs" role="tabpanel">
-				      <h6 class="text-dark font-weight-bold">Mô tả chi tiết loại máy:</h6>
-				      <p class="text-sm text-dark mb-0" 
-				         th:text="${device.typeDescription != null && !device.typeDescription.isEmpty() ? device.typeDescription : 'Không có mô tả kỹ thuật cho dòng máy này.'}">
-				      </p>
-				    </div>
-				    
-				    <div class="tab-pane fade p-3 border-radius-lg bg-gray-100 shadow-inner" id="notes" role="tabpanel">
-				      <h6 class="text-dark font-weight-bold">Lưu ý từ kỹ thuật viên:</h6>
-				      <p class="text-sm text-dark mb-0" 
-				         th:text="${device.notes != null && !device.notes.isEmpty() ? device.notes : 'Hiện chưa có ghi chú nào về quá trình vận hành của thiết bị này.'}">
-				      </p>
-				    </div>
-				  </div>
-				</div>
+                <div class="col-12">
+                  <div class="nav-wrapper position-relative end-0">
+                    <ul class="nav nav-pills nav-fill p-1" role="tablist">
+                      <li class="nav-item">
+                        <a class="nav-link mb-0 px-0 py-1 active" data-bs-toggle="tab" href="#specs" role="tab" aria-selected="true">
+                          <i class="material-symbols-rounded text-sm me-2">settings_suggest</i>
+                          Thông số kỹ thuật
+                        </a>
+                      </li>
+                      <li class="nav-item">
+                        <a class="nav-link mb-0 px-0 py-1" data-bs-toggle="tab" href="#notes" role="tab" aria-selected="false">
+                          <i class="material-symbols-rounded text-sm me-2">history_edu</i>
+                          Ghi chú vận hành
+                        </a>
+                      </li>
+                    </ul>
+                  </div>
+                  
+                  <div class="tab-content mt-3">
+                    <div class="tab-pane fade show active p-3 border-radius-lg bg-gray-100 shadow-inner" id="specs" role="tabpanel">
+                      <h6 class="text-dark font-weight-bold">Mô tả chi tiết loại máy:</h6>
+                      <p class="text-sm text-dark mb-0" 
+                         th:text="${device.typeDescription != null && !device.typeDescription.isEmpty() ? device.typeDescription : 'Không có mô tả kỹ thuật cho dòng máy này.'}">
+                      </p>
+                    </div>
+                    
+                    <div class="tab-pane fade p-3 border-radius-lg bg-gray-100 shadow-inner" id="notes" role="tabpanel">
+                      <h6 class="text-dark font-weight-bold">Lưu ý từ kỹ thuật viên:</h6>
+                      <p class="text-sm text-dark mb-0" 
+                         th:text="${device.notes != null && !device.notes.isEmpty() ? device.notes : 'Hiện chưa có ghi chú nào về quá trình vận hành của thiết bị này.'}">
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
+              
             </div>
           </div>
         </div>

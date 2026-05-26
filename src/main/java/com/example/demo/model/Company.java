@@ -33,9 +33,6 @@ public class Company {
     @Column(name = "tax_code", length = 50)
     private String taxCode;
 
-    @Column(name = "bank_account", length = 50)
-    private String bankAccount;
-
     @Column(name = "contact_info", columnDefinition = "TEXT")
     private String contactInfo;
 
