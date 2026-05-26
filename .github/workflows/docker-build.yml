@@ -60,6 +60,6 @@ jobs:
             -e CLOUD_AWS_CREDENTIALS_ACCESS_KEY="${{ secrets.AWS_ACCESS_KEY }}" \
             -e CLOUD_AWS_CREDENTIALS_SECRET_KEY="${{ secrets.AWS_SECRET_KEY }}" \
             -e CLOUD_AWS_REGION_STATIC="ap-southeast-1" \
-            -e CLOUD_AWS_S3_BUCKET="medical-images-trantran-bucket " \
+            -e CLOUD_AWS_S3_BUCKET="medical-images-trantran-bucket" \
             --restart always \
             tranha161/medical-web:latest
