@@ -46,17 +46,6 @@ public class UsersService {
 
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
-    public Users login(String username, String rawPassword) {
-        Users user = usersRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Tên đăng nhập không tồn tại!"));
-
-        if (!passwordEncoder.matches(rawPassword, user.getPassword())) {
-            throw new RuntimeException("Mật khẩu không chính xác!");
-        }
-
-        return user;
-    }
-
     public Users createUser(Users newUser, Integer roleId) {
         if (usersRepository.existsByUsername(newUser.getUsername())) {
             throw new RuntimeException("Tên đăng nhập đã tồn tại!");

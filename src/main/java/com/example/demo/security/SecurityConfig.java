@@ -35,8 +35,8 @@ public class SecurityConfig {
             .httpBasic(Customizer.withDefaults())
             
             .formLogin(form -> form
-            	    .loginPage("/login")              // GET hiển thị trang
-            	    .loginProcessingUrl("/login")  // POST xử lý login
+            	    .loginPage("/login")
+            	    .loginProcessingUrl("/login")
             	    .defaultSuccessUrl("/redirect", true)
             	    .failureUrl("/login?error")
             	    .permitAll()
